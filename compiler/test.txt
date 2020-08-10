@@ -1,0 +1,4 @@
+1 let x = 10
+2 let y = 89
+3 let c = x + y
+4 end

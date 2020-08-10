@@ -45,15 +45,15 @@ private:
         std::fill(memory_.begin(), memory_.end(), 0u);
     }
 
-    Simpletron(const Simpletron& );
-    Simpletron& operator=(Simpletron& );
-
     bool write_word_(ushort addr, const u_char* bytes);
     ushort read_word_(ushort addr);
     void fetch();
     void decode();
 
 public:
+    Simpletron(const Simpletron& ) = delete;
+    Simpletron& operator=(Simpletron& ) = delete;
+
     static Simpletron* get_instance() {
         if (!instance)
             instance = new Simpletron();
