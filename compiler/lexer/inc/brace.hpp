@@ -10,7 +10,7 @@ public:
     {
     }
 
-    enum BraceTypes {
+    enum BraceNames {
         LB, RB
     };
 };

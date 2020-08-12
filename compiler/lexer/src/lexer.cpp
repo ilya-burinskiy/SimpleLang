@@ -13,8 +13,12 @@
 
 /*
                     TO DO
-    - Make two buffers instead of one and reload them
+    - Make two buffers instead of one and reload them.
+    - Handle errors.
 */
+using Tok = Token::TokenNames;
+using Br  = Brace::BraceNames;
+using Op  = Operation::OpNames;
 
 Lexer* Lexer::instance = nullptr;
 
@@ -24,13 +28,13 @@ Lexer::Lexer(): buf_{},
                 words_{},
                 state_{0}
 {
-    reserve(Word((int) Token::TokenNames::REM, "rem"));
-    reserve(Word((int) Token::TokenNames::INPUT, "input"));
-    reserve(Word((int) Token::TokenNames::LET, "let"));
-    reserve(Word((int) Token::TokenNames::PRINT, "print"));
-    reserve(Word((int) Token::TokenNames::GOTO, "goto"));
-    reserve(Word((int) Token::TokenNames::IF, "if"));
-    reserve(Word((int) Token::TokenNames::END, "end"));
+    reserve(Word((int) Tok::REM, "rem"));
+    reserve(Word((int) Tok::INPUT, "input"));
+    reserve(Word((int) Tok::LET, "let"));
+    reserve(Word((int) Tok::PRINT, "print"));
+    reserve(Word((int) Tok::GOTO, "goto"));
+    reserve(Word((int) Tok::IF, "if"));
+    reserve(Word((int) Tok::END, "end"));
 }
 
 
@@ -64,7 +68,7 @@ void Lexer::reserve(const Word& word) {
 void Lexer::reserve(Word&& word) {
     using std::string;
     string lexeme = word.get_lexeme();
-    words_.insert(std::make_pair(lexeme, word));
+    words_.insert(std::make_pair(lexeme, std::move(word)));
 }
 
 char Lexer::next_char() {
@@ -134,14 +138,14 @@ token_uptr Lexer::get_token() {
                 state_ = 0;
                 if (c == '(')
                     return token_uptr(new Brace(
-                        (int) Token::TokenNames::BRACE,
-                        (int) Brace::BraceTypes::LB
-                    ));
+                        (int) Tok::BRACE,
+                        (int) Br::LB)
+                    );
                 else
                     return token_uptr(new Brace(
-                        (int) Token::TokenNames::BRACE,
-                        (int) Brace::BraceTypes::RB
-                    ));
+                        (int) Tok::BRACE,
+                        (int) Br::RB)
+                    );
             } else if (EOF == c)
                 state_ = 5;
         break;
@@ -186,7 +190,7 @@ token_uptr Lexer::get_num() {
                 state_ = 0;
                 --forward_;
 
-                res = new Num((int) Token::TokenNames::NUM, std::stoi(number));
+                res = new Num((int) Tok::NUM, std::stoi(number));
                 return token_uptr(res);
             }
         }
@@ -211,7 +215,7 @@ token_uptr Lexer::get_id() {
                     res = new Word(std::move(w->second));
                     return token_uptr(res);
                 } else {
-                    Word w = Word((int) Token::TokenNames::ID, s);
+                    Word w = Word((int) Tok::ID, s);
                     reserve(w);
                     res = new Word(std::move(w));
                     return token_uptr(res);
@@ -237,27 +241,27 @@ token_uptr Lexer::get_op() {
             else if (c == '+') {
                 state_ = 0;
                 return token_uptr(new Operation(
-                    (int) Token::TokenNames::OP,
-                    (int) Operation::OperationNames::PLUS
-                ));
+                    (int) Tok::OP,
+                    (int) Op::PLUS)
+                );
             } else if (c == '-') {
                 state_ = 0;
                 return token_uptr(new Operation(
-                    (int) Token::TokenNames::OP,
-                    (int) Operation::OperationNames::MINUS
-                ));
+                    (int) Tok::OP,
+                    (int) Op::MINUS)
+                );
             } else if (c == '*') {
                 state_ = 0;
                 return token_uptr(new Operation(
-                    (int) Token::TokenNames::OP,
-                    (int) Operation::OperationNames::MUL
-                ));
+                    (int) Tok::OP,
+                    (int) Op::MUL)
+                );
             } else if (c == '/') {
                 state_ = 0;
                 return token_uptr(new Operation(
-                    (int) Token::TokenNames::OP,
-                    (int) Operation::OperationNames::DIV
-                ));
+                    (int) Tok::OP,
+                    (int) Op::DIV)
+                );
             }
 
         break;
@@ -265,56 +269,63 @@ token_uptr Lexer::get_op() {
         case 6:
             c = next_char();
             state_ = 0;
+            // <> op
             if (c == '>') {
                 return token_uptr(new Operation(
-                    (int) Token::TokenNames::OP,
-                    (int) Operation::OperationNames::NE
-                ));
+                    (int) Tok::OP,
+                    (int) Op::NE)
+                );
+            // <= op
             } else if (c == '=') {
                 return token_uptr(new Operation(
-                    (int) Token::TokenNames::OP,
-                    (int) Operation::OperationNames::LE
-                ));
+                    (int) Tok::OP,
+                    (int) Op::LE)
+                );
+            // < op 
             } else {
                 --forward_;
                 return token_uptr(new Operation(
-                    (int) Token::TokenNames::OP,
-                    (int) Operation::OperationNames::LT
-                ));
+                    (int) Tok::OP,
+                    (int) Op::LT)
+                );
             }
         break;
 
         case 7:
             c = next_char(); 
             state_ = 0;
+            // == op
             if (c == '=')
                 return token_uptr(new Operation(
-                    (int) Token::TokenNames::OP,
-                    (int) Operation::OperationNames::EQ
-                ));
+                    (int) Tok::OP,
+                    (int) Op::EQ)
+                );
+            // = op
             else {
                 --forward_;
                 return token_uptr(new Operation(
-                    (int) Token::TokenNames::OP,
-                    (int) Operation::OperationNames::ASSIGMENT
-                ));
+                    (int) Tok::OP,
+                    (int) Op::ASSIGMENT)
+                );
             }
         break;
 
         case 8:
             c = next_char();
             state_ = 0;
+            // >= op
             if (c == '=')
                 return token_uptr(new Operation(
-                    (int) Token::TokenNames::OP,
-                    (int) Operation::OperationNames::GE
-                ));
+                    (int) Tok::OP,
+                    (int) Op::GE)
+                );
+            // > op
             else
                 --forward_;
                 return token_uptr(new Operation(
-                    (int) Token::TokenNames::OP,
-                    (int) Operation::OperationNames::GT
-                ));
+                    (int) Tok::OP,
+                    (int) Op::GT)
+                );
         }
     }
 }

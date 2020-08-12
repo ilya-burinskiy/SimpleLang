@@ -11,7 +11,7 @@ public:
     {
     }
 
-    enum OperationNames {
+    enum OpNames {
         PLUS, MINUS, DIV, MUL,      // ariphmetic operations
         LT, LE, EQ, NE, GT, GE,     // compare operations
         ASSIGMENT

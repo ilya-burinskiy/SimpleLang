@@ -16,11 +16,11 @@ using namespace std;
 
 int main(int argc, char** argv) {
     Lexer* lex = Lexer::get_instance();
-// #ifndef NDEBUG
-    // lex->load_buf("test.txt");
-// #else
+#ifndef NDEBUG
+    lex->load_buf("test.txt");
+#else
     lex->load_buf("../test.txt");
-// #endif
+#endif
     token_uptr tok;
     token_uptr tmp;
     Token* ptok;
