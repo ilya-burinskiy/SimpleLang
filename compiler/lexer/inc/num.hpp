@@ -6,11 +6,7 @@ class Num: public Token {
 private:
     int value_;
 public:
-    Num(int val, int tag): Token(tag), value_{val}
-    {
-    }
-
-    Num(int val, const Token& tok): Token(tok), value_{val}
+    Num(int tag, int val): Token(tag), value_{val}
     {
     }
 

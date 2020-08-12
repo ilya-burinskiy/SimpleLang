@@ -17,6 +17,7 @@ public:
     }
 
     Word(const Word&) = default;
+    Word(Word &&) = default;
     Word& operator=(const Word&) = default;
     
     const std::string& get_lexeme() const;

@@ -11,9 +11,12 @@ class Token {
 private:
     int tag_;
 public:
-    enum class TokenNames {
-        REM, INPUT, LET, PRINT, GOTO, IF, END, // for reserved tokens
-        ID, NUMBER, OPERATION                  // common tokens names
+    enum TokenNames {
+        REM, INPUT, LET, PRINT, GOTO, IF, END,  // for reserved tokens
+        ID, NUM, OP,                            // common tokens names
+        BRACE,
+        NONE                                    // signals that there are no
+                                                // more tokens
     };
 
     explicit Token(int tag): tag_{tag}
