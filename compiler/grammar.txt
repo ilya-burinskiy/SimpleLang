@@ -1,0 +1,41 @@
+prog    -> lines
+
+lines   ->  lines_
+lines_  ->  line lines_ | e
+line    ->  linenum linebody
+linbody ->  stmt | def | <end>
+
+def     -> <let> lval <=> expr
+stmt    -> <lval> = expr
+        |  <if> cmpexpr goto <strnum>
+        |  <goto> <strnum>
+        |  <input> lval
+        |  <print> rval
+
+cmpexpr  -> rval cmpop rval 
+lval     -> <id>
+rval     -> <id> | <num>
+cmpop    -> > | >= | < | <= | == | <>
+
+expr   -> term exr_
+exr_   -> + term exrp_ 
+       |  - term expr_     
+       | e
+
+term   -> factor term_
+term_  -> * factor term_ 
+       |  / factor term_
+       | e
+factor -> (expr) | -(expr) | num | -num | id | -id
+
+
+FIRST(factor)  = {(, num, id, -}
+FIRST(term_)   = {*, /, e}
+FIRST(term)    = {(, num, id, -}
+FIRST(expr_)   = {+, -, e}
+FIRST(expr)    = {(, num, id, -}
+FIRST(cmpop)   = {>, >=, <, <=, ==, <>}
+FIRST(rval)    = {id, num}
+FIRST(lval)    = {id}
+FIRST(cmpexpr) = {id, num}
+FIRST(stmt)    = {let, id, if, goto, print, input}
