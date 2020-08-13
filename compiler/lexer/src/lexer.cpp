@@ -28,7 +28,6 @@ Lexer::Lexer(): buf_{},
                 words_{},
                 state_{0}
 {
-    reserve(Word((int) Tok::REM, "rem"));
     reserve(Word((int) Tok::INPUT, "input"));
     reserve(Word((int) Tok::LET, "let"));
     reserve(Word((int) Tok::PRINT, "print"));
@@ -114,7 +113,7 @@ token_uptr Lexer::get_token() {
     auto isbrace = [](char c) {
         return c == '(' || c == ')';
     };
-
+    
     char c;
     Token* res;
     while (true) {
@@ -126,6 +125,9 @@ token_uptr Lexer::get_token() {
                 state_ = 1;
             else if (isdigit(c)) {
                 state_ = 2;
+                lexeme_begin_ = forward_;
+            } else if (c == 'r') {
+                state_ = 9;
                 lexeme_begin_ = forward_;
             } else if (isalpha(c) || c == '_') {
                 state_ = 3;
@@ -172,7 +174,36 @@ token_uptr Lexer::get_token() {
             // Buffers might be reloaded here if eof at
             // the end of one of them and if is not
             // return that there is no tokens
-            return token_uptr(new Token((int) Token::TokenNames::NONE));
+            return token_uptr(new Token((int) Tok::NONE));
+
+        // skip comment
+        case 9:
+            c = next_char();
+            if (c == 'e') {
+                state_ = 10;
+            } else {
+                state_ = 3;
+            }
+        break;
+
+        case 10:
+            c = next_char();
+            if (c == 'm') {
+                state_ = 11;
+            } else {
+                state_ = 3;
+            }
+        break;
+
+        case 11:
+            c = next_char();
+            if (c != '\n')
+                state_ = 11;
+            else {
+                state_ = 0;
+                --forward_;
+            }
+        break;
         }
     }
 }

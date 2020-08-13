@@ -12,7 +12,7 @@ private:
     int tag_;
 public:
     enum TokenNames {
-        REM, INPUT, LET, PRINT, GOTO, IF, END,  // for reserved tokens
+        INPUT, LET, PRINT, GOTO, IF, END,  // for reserved tokens
         ID, NUM, OP,                            // common tokens names
         BRACE,
         NONE                                    // signals that there are no
