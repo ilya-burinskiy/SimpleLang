@@ -2,8 +2,7 @@
 #include "token.hpp"
 #include "symbols.hpp"
 
-using namespace Symbols;
 
-Operation::Operation(Terminal tag, Op opt): Token(tag), optype{opt}
+Operation::Operation(Symbol tag, Op opt): Token(tag), optype{opt}
 {
 }

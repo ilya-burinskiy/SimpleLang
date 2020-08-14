@@ -1,6 +1,7 @@
 #include "lexer.hpp"
 #include "token.hpp"
 #include "operation.hpp"
+#include "symbols.hpp"
 
 #include <memory>
 #include <utility>
@@ -14,10 +15,8 @@
                     TO DO
     - Make two buffers instead of one and reload them.
     - Handle errors.
+    - Skip comments
 */
-using Tok = Token::TokenNames;
-using Br  = Brace::BraceNames;
-using Op  = Operation::OpNames;
 
 Lexer* Lexer::instance = nullptr;
 
@@ -27,12 +26,11 @@ Lexer::Lexer(): buf_{},
                 words_{},
                 state_{0}
 {
-    reserve(Word((int) Tok::INPUT, "input"));
-    reserve(Word((int) Tok::LET, "let"));
-    reserve(Word((int) Tok::PRINT, "print"));
-    reserve(Word((int) Tok::GOTO, "goto"));
-    reserve(Word((int) Tok::IF, "if"));
-    reserve(Word((int) Tok::END, "end"));
+    reserve(Word(Symbol::INPUT, "input"));
+    reserve(Word(Symbol::LET,   "let"));
+    reserve(Word(Symbol::PRINT, "print"));
+    reserve(Word(Symbol::GOTO,  "goto"));
+    reserve(Word(Symbol::IF,    "if"));
 }
 
 
@@ -59,14 +57,15 @@ void Lexer::load_buf(const char* fname) {
 
 void Lexer::reserve(const Word& word) {
     using std::string;
-    string lexeme = word.get_lexeme();
-    words_.insert(std::make_pair(lexeme, word));
+    using std::make_pair;
+    words_.insert(make_pair(word.lexeme, word));
 }
 
 void Lexer::reserve(Word&& word) {
     using std::string;
-    string lexeme = word.get_lexeme();
-    words_.insert(std::make_pair(lexeme, std::move(word)));
+    using std::make_pair;
+    using std::move;
+    words_.insert(make_pair(word.lexeme, move(word)));
 }
 
 char Lexer::next_char() {
@@ -98,7 +97,8 @@ void Lexer::skip_blank() {
     }
 }
 
-token_uptr Lexer::get_token() {
+Token* Lexer::get_token() {
+
     auto isop = [](char c) {
         return c == '+' ||
                c == '-' ||
@@ -114,7 +114,6 @@ token_uptr Lexer::get_token() {
     };
     
     char c;
-    Token* res;
     while (true) {
 
         switch (state_) {
@@ -124,9 +123,6 @@ token_uptr Lexer::get_token() {
                 state_ = 1;
             else if (isdigit(c)) {
                 state_ = 2;
-                lexeme_begin_ = forward_;
-            } else if (c == 'r') {
-                state_ = 9;
                 lexeme_begin_ = forward_;
             } else if (isalpha(c) || c == '_') {
                 state_ = 3;
@@ -138,15 +134,9 @@ token_uptr Lexer::get_token() {
             } else if (isbrace(c)) {
                 state_ = 0;
                 if (c == '(')
-                    return token_uptr(new Brace(
-                        (int) Tok::BRACE,
-                        (int) Br::LB)
-                    );
+                    return new Token(Symbol::LB);
                 else
-                    return token_uptr(new Brace(
-                        (int) Tok::BRACE,
-                        (int) Br::RB)
-                    );
+                    return new Token(Symbol::RB);
             } else if (EOF == c)
                 state_ = 5;
         break;
@@ -173,90 +163,60 @@ token_uptr Lexer::get_token() {
             // Buffers might be reloaded here if eof at
             // the end of one of them and if is not
             // return that there is no tokens
-            return token_uptr(new Token((int) Tok::NONE));
-
-        // skip comment
-        case 9:
-            c = next_char();
-            if (c == 'e') {
-                state_ = 10;
-            } else {
-                state_ = 3;
-            }
-        break;
-
-        case 10:
-            c = next_char();
-            if (c == 'm') {
-                state_ = 11;
-            } else {
-                state_ = 3;
-            }
-        break;
-
-        case 11:
-            c = next_char();
-            if (c != '\n')
-                state_ = 11;
-            else {
-                state_ = 0;
-                --forward_;
-            }
-        break;
+            return new Token(Symbol::NONE);
         }
     }
 }
 
-token_uptr Lexer::get_num() {
+Token* Lexer::get_num() {
+    using std::string;
+    using std::stoi;
+
     char c;
-    Token *res;
     while (true) {
         if (state_ == 2) {
             c = next_char();
             if (isdigit(c))
                 state_ = 2;
             else {
-                std::string number(lexeme_begin_, forward_);
                 state_ = 0;
+                string s(lexeme_begin_, forward_);
                 --forward_;
-
-                res = new Num((int) Tok::NUM, std::stoi(number));
-                return token_uptr(res);
+                int val = stoi(s);
+                return new Num(Symbol::NUM, val);
             }
         }
     }
 }
 
-token_uptr Lexer::get_id() {
+Token* Lexer::get_id() {
+    using std::string;
+    using std::unordered_map;
+
     char c;
-    Token *res;
     while (true) {
         if (state_ == 3) {
             c = next_char();
             if (isalnum(c) || c == '_')
                 state_ = 3;
             else {
-                std::string s = std::string(lexeme_begin_, forward_);
                 state_ = 0;
+                string s = string(lexeme_begin_, forward_);
                 --forward_;
-
-                hash_table::iterator w = words_.find(s);
+                unordered_map<string, Word>::iterator w = words_.find(s);
                 if (w != words_.end()) {
-                    res = new Word(std::move(w->second));
-                    return token_uptr(res);
+                    return  new Word((w->second));
                 } else {
-                    Word w = Word((int) Tok::ID, s);
+                    Word w = Word(Symbol::ID, s);
                     reserve(w);
-                    res = new Word(std::move(w));
-                    return token_uptr(res);
+                    return new Word(Symbol::ID, s);
                 }
             }
         }
     }
 }
 
-token_uptr Lexer::get_op() {
-    Token* res;
+Token* Lexer::get_op() {
     char c;
     while (true) {
         switch (state_) {
@@ -270,28 +230,16 @@ token_uptr Lexer::get_op() {
                 state_ = 8;
             else if (c == '+') {
                 state_ = 0;
-                return token_uptr(new Operation(
-                    (int) Tok::OP,
-                    (int) Op::PLUS)
-                );
+                return new Operation(Symbol::OP, Operation::PLUS);
             } else if (c == '-') {
                 state_ = 0;
-                return token_uptr(new Operation(
-                    (int) Tok::OP,
-                    (int) Op::MINUS)
-                );
+                return new Operation(Symbol::OP, Operation::MINUS);
             } else if (c == '*') {
                 state_ = 0;
-                return token_uptr(new Operation(
-                    (int) Tok::OP,
-                    (int) Op::MUL)
-                );
+                return new Operation(Symbol::OP, Operation::MUL);
             } else if (c == '/') {
                 state_ = 0;
-                return token_uptr(new Operation(
-                    (int) Tok::OP,
-                    (int) Op::DIV)
-                );
+                return new Operation(Symbol::OP, Operation::DIV);
             }
 
         break;
@@ -301,23 +249,14 @@ token_uptr Lexer::get_op() {
             state_ = 0;
             // <> op
             if (c == '>') {
-                return token_uptr(new Operation(
-                    (int) Tok::OP,
-                    (int) Op::NE)
-                );
+                return new Operation(Symbol::RELOP, Operation::NE);
             // <= op
             } else if (c == '=') {
-                return token_uptr(new Operation(
-                    (int) Tok::OP,
-                    (int) Op::LE)
-                );
+                return new Operation(Symbol::RELOP, Operation::LE);
             // < op 
             } else {
                 --forward_;
-                return token_uptr(new Operation(
-                    (int) Tok::OP,
-                    (int) Op::LT)
-                );
+                return new Operation(Symbol::RELOP, Operation::LT);
             }
         break;
 
@@ -326,17 +265,11 @@ token_uptr Lexer::get_op() {
             state_ = 0;
             // == op
             if (c == '=')
-                return token_uptr(new Operation(
-                    (int) Tok::OP,
-                    (int) Op::EQ)
-                );
+                return new Operation(Symbol::RELOP, Operation::EQ);
             // = op
             else {
                 --forward_;
-                return token_uptr(new Operation(
-                    (int) Tok::OP,
-                    (int) Op::ASSIGMENT)
-                );
+                return new Operation(Symbol::OP, Operation::ASSIGMENT);
             }
         break;
 
@@ -345,17 +278,11 @@ token_uptr Lexer::get_op() {
             state_ = 0;
             // >= op
             if (c == '=')
-                return token_uptr(new Operation(
-                    (int) Tok::OP,
-                    (int) Op::GE)
-                );
+                return new Operation(Symbol::RELOP, Operation::GE);
             // > op
             else
                 --forward_;
-                return token_uptr(new Operation(
-                    (int) Tok::OP,
-                    (int) Op::GT)
-                );
+                return new Operation(Symbol::RELOP, Operation::GT);
         }
     }
 }

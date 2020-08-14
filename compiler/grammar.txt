@@ -1,21 +1,21 @@
-prog    -> lines
+prog    ->  lines
 
 lines   ->  lines_
 lines_  ->  line lines_ | e
-line    ->  linenum linebody
-linbody ->  stmt | def | <end>
+line    ->  <num> linebody
+linbody ->  stmt | def
 
-def     -> <let> lval <=> expr
-stmt    -> <lval> = expr
-        |  <if> cmpexpr goto <strnum>
-        |  <goto> <strnum>
-        |  <input> lval
+
+def     -> <let> id <=> expr
+
+stmt    -> <id> = expr
+        |  <if> cmpexpr goto <num>
+        |  <goto> <num>
+        |  <input> <id>
         |  <print> rval
 
-cmpexpr  -> rval cmpop rval 
-lval     -> <id>
+cmpexpr  -> expr relop exrp 
 rval     -> <id> | <num>
-cmpop    -> > | >= | < | <= | == | <>
 
 expr   -> term exr_
 exr_   -> + term exrp_ 
@@ -26,10 +26,13 @@ term   -> factor term_
 term_  -> * factor term_ 
        |  / factor term_
        | e
-factor -> (expr) | -(expr) | num | -num | id | -id
+
+factor -> (expr) | num | id | negfactor
+negfactor -> - negoperand
+negoperand -> (expr) | num | id
 
 
-FIRST(factor)  = {(, num, id, -}
+FIRST(factor)  = {(, num, id, -} = FIRST(negfactor)
 FIRST(term_)   = {*, /, e}
 FIRST(term)    = {(, num, id, -}
 FIRST(expr_)   = {+, -, e}
@@ -37,5 +40,61 @@ FIRST(expr)    = {(, num, id, -}
 FIRST(cmpop)   = {>, >=, <, <=, ==, <>}
 FIRST(rval)    = {id, num}
 FIRST(lval)    = {id}
-FIRST(cmpexpr) = {id, num}
-FIRST(stmt)    = {let, id, if, goto, print, input}
+FIRST(cmpexpr) = {(, num, id, -}
+FIRST(stmt)    = {id, if, goto, print, input}
+FIRST(def)     = {let}
+FIRST(linbody) = {let, id, if, goto, print, input}
+FIRST(line)    = {num}
+FIRST(lines_)  = {num, e}
+FIRST(lines)   = {num}
+FIRST(prog)    = {num}
+
+FOLLOW(factor)  = {+, -, *, /, ), >, >=, <, <=, ==, <>, goto}
+FOLLOW(term_)   = {+, -, ), >, >=, <, <=, ==, <>, goto}
+FOLLOW(term)    = {+, -, ), >, >=, <, <=, ==, <>, goto}
+FOLLOW(expr_)   = {), >, >=, <, <=, ==, <>, goto}
+FOLLOW(expr)    = {), >, >=, <, <=, ==, <>, goto}
+FOLLOW(cmpop)   = {(, num, id, -}
+FOLLOW(rval)    = {num, $}
+FOLLOW(cmpexpr) = {goto}
+FOLLOW(stmt)    = {num, $}
+FOLLOW(def)     = {num, $}
+FOLLOW(linbody) = {num, $}
+FOLLOW(line)    = {num, $}
+FOLLOW(lines_)  = {$}
+FOLLOW(lines)   = {$}
+FOLLOW(prog)    = {$}
+
+FIRST(lines)       = {num}                      => M[prog, num]  = [lines]
+FIRST(lines_)      = {num, e}                   => M[lines, num] = M[lines, $] = [lines]  
+FIRST(line lines_) = FIRST(line) = {num}        => M[lines_, num] = [line lines_]
+
+FIRST(num line) = {num}                         => M[line, num] = [num linebody]
+FIRST(stmt)     = {id, if, goto, print, input}  => M[linebody, id] = ... = M[linbody, input] = [stmt]
+FIRST(def)      = {let}                         => M[linebody, let] = [def]
+
+FIRST(let id = expr)          = {let}           => M[def, let] = [let]
+FIRST(id = expr)              = {id}            => M[stmt, id] = [id = expr]
+FIRST(if cmpexpr goto strnum) = {if}            => M[stmt] = [if cmpexpr goto num]
+FIRST(goto num)               = {goto}          => M[stmt, goto] = [goto num]
+FIRST(input id)               = {input}         => M[stmt, input] = [input id]
+FIRST(print rval)             = {print}         => M[stmt, print] = [print rval]
+FIRST(expr relop expr)        = {(, num, id, -} => M[cmpexpr, (] = ... = M[cmpexpr, -] = [expr relpop cmpexpr]
+FIRST(id)                     = {id}            => M[rval, id] = [id]
+FIRST(num)                    = {num}           => M[rval, num] = [num]
+
+FIRST(term exr_)      = {(, num, id, -}         => M[expr, (] = ... = M[expr, -] = [term expr_]
+FIRST(+ term exrp_)   = {+}                     => M[expr_, +] = [+ term expr_] 
+FIRST(- term expr_)   = {-}                     => M[expr_, -] = [- term expr_]
+FIRST(factor term_)   = {(, num, id, -}         => M[term, (] = ... = M[term, -] = [factor term]
+FIRST(* factor term_) = {*}                     => M[term_, *] = [* factor term_]
+FIRST(/ factor term_) = {/}                     => M[term_, /] = [/ factor term_]
+
+FIRST((expr))      = {(}                        => M[factor, (] = [(expr)]
+FIRST(num)         = {num}                      => M[factor, num] = [num]
+FIRST(id)          = {id}                       => M[factor, id] = [id]
+FIRST(negfactor)   = {-}                        => M[factor, -] = [negfactor]
+FIRST(-negoperand) = {-}                        => M[negfactor, -] = [-negoperand]
+FIRST((expr))      = {(}                        => M[negfactor, (] = [(expr)]
+FIRST(num)         = {num}                      => M[negfactor, num] = [num]
+FIRST(id)          = {id}                       => M[negfactor, id] = [id]

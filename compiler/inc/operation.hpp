@@ -13,7 +13,7 @@ struct Operation: public Token {
 
     Op optype;
 
-    Operation(Symbols::Terminal tag, Op operation);
+    Operation(Symbol tag, Op operation);
     Operation(const Operation&) = default;
     Operation(Operation&&) = default;
 

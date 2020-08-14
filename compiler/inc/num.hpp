@@ -6,7 +6,7 @@
 
 struct Num: public Token {
     int val;
-    Num(Symbols::Terminal tag, int val);
+    Num(Symbol tag, int val);
 
     Num(const Num&) = default;
     Num(Num&&) = default;

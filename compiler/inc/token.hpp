@@ -2,14 +2,15 @@
 #define TOKEN_HPP_
 
 #include <memory>
+#include <iostream>
 #include "symbols.hpp"
 
 
 struct Token {
-    Symbols::Terminal tag;
+    Symbol term;
 
-    explicit Token(Symbols::Terminal t);
-
+    explicit Token(Symbol t);
+    friend std::ostream& operator<<(std::ostream& os, const Token& tok);
     Token(const Token&) = default;
     Token(Token &&) = default;
 

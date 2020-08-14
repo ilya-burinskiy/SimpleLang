@@ -9,9 +9,9 @@
 
 
 struct Word: public Token {
-    std::string lexeme_;
+    std::string lexeme;
 
-    Word(Symbols::Terminal tag, const std::string& str);
+    Word(Symbol tag, const std::string& str);
 
     Word(const Word&) = default;
     Word(Word&&) = default;
