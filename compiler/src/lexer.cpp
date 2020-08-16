@@ -1,6 +1,6 @@
 #include "lexer.hpp"
 #include "token.hpp"
-#include "operation.hpp"
+#include "relop.hpp"
 #include "symbols.hpp"
 
 #include <memory>
@@ -137,6 +137,8 @@ Token* Lexer::get_token() {
                     return new Token(Symbol::LB);
                 else
                     return new Token(Symbol::RB);
+            } else if (c == ';') {
+                return new Token(Symbol::DELIM);
             } else if (EOF == c)
                 state_ = 5;
         break;
@@ -163,7 +165,7 @@ Token* Lexer::get_token() {
             // Buffers might be reloaded here if eof at
             // the end of one of them and if is not
             // return that there is no tokens
-            return new Token(Symbol::NONE);
+            return new Token(Symbol::END);
         }
     }
 }
@@ -230,16 +232,16 @@ Token* Lexer::get_op() {
                 state_ = 8;
             else if (c == '+') {
                 state_ = 0;
-                return new Operation(Symbol::OP, Operation::PLUS);
+                return new Token(Symbol::PLUS);
             } else if (c == '-') {
                 state_ = 0;
-                return new Operation(Symbol::OP, Operation::MINUS);
+                return new Token(Symbol::MINUS);
             } else if (c == '*') {
                 state_ = 0;
-                return new Operation(Symbol::OP, Operation::MUL);
+                return new Token(Symbol::MUL);
             } else if (c == '/') {
                 state_ = 0;
-                return new Operation(Symbol::OP, Operation::DIV);
+                return new Token(Symbol::DIV);
             }
 
         break;
@@ -249,14 +251,14 @@ Token* Lexer::get_op() {
             state_ = 0;
             // <> op
             if (c == '>') {
-                return new Operation(Symbol::RELOP, Operation::NE);
+                return new Relop(Symbol::RELOP, Relop::NE);
             // <= op
             } else if (c == '=') {
-                return new Operation(Symbol::RELOP, Operation::LE);
+                return new Relop(Symbol::RELOP, Relop::LE);
             // < op 
             } else {
                 --forward_;
-                return new Operation(Symbol::RELOP, Operation::LT);
+                return new Relop(Symbol::RELOP, Relop::LT);
             }
         break;
 
@@ -265,11 +267,11 @@ Token* Lexer::get_op() {
             state_ = 0;
             // == op
             if (c == '=')
-                return new Operation(Symbol::RELOP, Operation::EQ);
+                return new Relop(Symbol::RELOP, Relop::EQ);
             // = op
             else {
                 --forward_;
-                return new Operation(Symbol::OP, Operation::ASSIGMENT);
+                return new Token(Symbol::ASSIGMENT);
             }
         break;
 
@@ -278,11 +280,11 @@ Token* Lexer::get_op() {
             state_ = 0;
             // >= op
             if (c == '=')
-                return new Operation(Symbol::RELOP, Operation::GE);
+                return new Relop(Symbol::RELOP, Relop::GE);
             // > op
             else
                 --forward_;
-                return new Operation(Symbol::RELOP, Operation::GT);
+                return new Relop(Symbol::RELOP, Relop::GT);
         }
     }
 }

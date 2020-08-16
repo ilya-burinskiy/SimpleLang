@@ -1,15 +1,16 @@
 cmake_minimum_required(VERSION 3.8)
-project(lexer)
+project(scc)
 
 set(CMAKE_BUILD_TYPE Debug)
-set(LEX_INC_DIR ${PROJECT_SOURCE_DIR}/inc)
-set(LEX_SRC_DIR ${PROJECT_SOURCE_DIR}/src)
-set(LEX_SRCS ${LEX_SRC_DIR}/lexer/main.cpp 
-             ${LEX_SRC_DIR}/lexer/lexer.cpp
-             ${LEX_SRC_DIR}/word.cpp
-             ${LEX_SRC_DIR}/token.cpp
-             ${LEX_SRC_DIR}/num.cpp
-             ${LEX_SRC_DIR}/operation.cpp)
+set(SCC_INC_DIR ${PROJECT_SOURCE_DIR}/inc)
+set(SCC_SRC_DIR ${PROJECT_SOURCE_DIR}/src)
+set(SCC_SRCS ${SCC_SRC_DIR}/main.cpp 
+             ${SCC_SRC_DIR}/word.cpp
+             ${SCC_SRC_DIR}/token.cpp
+             ${SCC_SRC_DIR}/num.cpp
+             ${SCC_SRC_DIR}/relop.cpp    
+             ${SCC_SRC_DIR}/lexer.cpp
+             ${SCC_SRC_DIR}/ll1parser.cpp)
 
-include_directories("${LEX_INC_DIR}")
-add_executable(lex ${LEX_SRCS})
+include_directories("${SCC_INC_DIR}")
+add_executable(scc ${SCC_SRCS})

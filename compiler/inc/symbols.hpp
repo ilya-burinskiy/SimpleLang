@@ -1,22 +1,21 @@
 #ifndef SYMBOLS_HPP_
 #define SYMBOLS_HPP_
 
+// Don't change symbols positions because
+// isterminal function in ll1parser class will not work
 typedef enum {
     // Terminals:
-    LET, INPUT, PRINT, GOTO, IF,      // reserved terminals
-    ID, NUM,                          
-    OP, RELOP,                        // ariphmetic and relation operations
+    LET, INPUT, PRINT, GOTO, IF, 
+    ID, NUM, PLUS, MINUS, MUL, DIV, ASSIGMENT,
+    RELOP, LB, RB, DELIM,
 
-    LB, RB,                           // left brace, right brace
-    NONE,                             // end of token stream ($)
+    // Nonterminals:
+    // prog, lines, lines_, line, linebody, def, stmt
+    // cmpexpr, rval, expr, expr_, term, term_, factor, negfactor
+    P, LS, L, LBODY, D, S, C,
+    E, E_, T, T_, F,
 
-    /*
-        Nonterminals:
-        prog, lines, lines_, line, linebody, def, stmt
-        cmpexpr, rval, expr, expr_, term, term_, factor, negfactor
-    */
-    P, LS, LS_, L, LBODY, D, S, C, R, 
-    E, E_, T, T_, F, NF
-        
+    // special grammar symbpol $
+    END,
 } Symbol;
 #endif

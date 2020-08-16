@@ -31,8 +31,17 @@ ostream& operator<<(ostream& os, const Token& tok) {
     case Symbol::INPUT:
         os << "INPUT";
     break;
-    case Symbol::OP:
-        os << "OP";
+    case Symbol::PLUS:
+        os << "PLUS";
+    break;
+    case Symbol::MINUS:
+        os << "MINUS";
+    break;
+    case Symbol::MUL:
+        os << "MUL";
+    break;
+    case Symbol::DIV:
+        os << "DIV";
     break;
     case Symbol::RELOP:
         os << "RELOP";
@@ -43,8 +52,8 @@ ostream& operator<<(ostream& os, const Token& tok) {
     case Symbol::RB:
         os << "RB";
     break;
-    case Symbol::NONE:
-        os << "NONE";
+    case Symbol::END:
+        os << "END";
     break;
     }
 }
