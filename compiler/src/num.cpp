@@ -3,6 +3,6 @@
 #include "token.hpp"
 
 
-Num::Num(Symbol tag, int v): Token(tag), val{v}
+Num::Num(Symbol tag, short v): Token(tag), val{v}
 {
 }

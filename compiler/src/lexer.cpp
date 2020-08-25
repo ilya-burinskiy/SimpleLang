@@ -139,6 +139,8 @@ Token* Lexer::get_token() {
                     return new Token(Symbol::RB);
             } else if (c == ';') {
                 return new Token(Symbol::DELIM);
+            } else if (c == ':') {
+                return new Token(Symbol::COLON);
             } else if (EOF == c)
                 state_ = 5;
         break;
@@ -207,7 +209,7 @@ Token* Lexer::get_id() {
                 --forward_;
                 unordered_map<string, Word>::iterator w = words_.find(s);
                 if (w != words_.end()) {
-                    return  new Word((w->second));
+                    return  new Word(w->second);
                 } else {
                     Word w = Word(Symbol::ID, s);
                     reserve(w);

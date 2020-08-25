@@ -5,8 +5,8 @@
 #include "token.hpp"
 
 struct Num: public Token {
-    int val;
-    Num(Symbol tag, int val);
+    short val;
+    Num(Symbol tag, short val);
 
     Num(const Num&) = default;
     Num(Num&&) = default;

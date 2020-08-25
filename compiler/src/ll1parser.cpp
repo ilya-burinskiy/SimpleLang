@@ -1,20 +1,27 @@
 #include "ll1parser.hpp"
 #include "lexer.hpp"
-#include <list>
-#include <vector>
+#include "symbols.hpp"
 
-using std::vector;
+#include <list>
+#include <typeinfo>
+
+#include <iostream>
+
+using std::cout;
+using std::endl;
+using std::list;
 
 LL1Parser* LL1Parser::instance = nullptr;
 
-LL1Parser* LL1Parser::get_instance() {
+LL1Parser* LL1Parser::get_instance() 
+{
     if (instance == nullptr)
         instance = new LL1Parser();
     return instance;
 }
 
 
-LL1Parser::LL1Parser(): ip_{nullptr}
+LL1Parser::LL1Parser(): ip_{nullptr}, tree_()
 {
     stack_.push(Symbol::END);
     stack_.push(Symbol::P);
@@ -26,253 +33,434 @@ LL1Parser::LL1Parser(): ip_{nullptr}
     a_ = ip_->term;
 }
 
-void LL1Parser::error() {
+void LL1Parser::error() 
+{
 
 }
 
-bool LL1Parser::isterminal_(Symbol s) {
-    return ((int) s >= 0) && ((int) s < 15);
+AST LL1Parser::get_tree()
+{
+    return tree_;
 }
 
-LL1Parser::ParserState LL1Parser::M_(Symbol nonterm, Symbol term) {
+LL1Parser::ParserState LL1Parser::M_() 
+{
 
-    switch (nonterm) {
+    switch (curr_symbol_) {
 
-    case P:
-        switch (term) {
+        case P:
+        case L_:
+            switch (a_) {
+                case LET:   return DERIVE;    
+                case ID:    return DERIVE;
+                case IF:    return DERIVE;
+                case GOTO:  return DERIVE;
+                case PRINT: return DERIVE;
+                case INPUT: return DERIVE;
+                case END:   return DERIVE;
+                default:    return ERROR;
+            }
+        break;
 
-        case NUM: return DERIVE;
-        case END: return DERIVE;
-        default:  return ERROR;
-        }
-    break;
-
-    case LS:
-        switch (term) {
-
-        case NUM: return DERIVE;
-        case END: return DERIVE;
-        default: return ERROR;
-        }
-    break;
-
-    case L:
-        switch (term) {
-        
-        case NUM: return DERIVE;
-        default: return ERROR;
-        }
-    break;
-
-    case LBODY:
-        switch (term) {
-
-        case ID: return DERIVE;
-        case LET: return DERIVE;
-        case IF: return DERIVE;
-        case GOTO: return DERIVE;
-        case INPUT: return DERIVE;
-        case PRINT: return DERIVE;
-        default: return ERROR;
-        }
-    break;
+        case L:
+            switch (a_) {
+                case LET:   return DERIVE;    
+                case ID:    return DERIVE;
+                case IF:    return DERIVE;
+                case GOTO:  return DERIVE;
+                case PRINT: return DERIVE;
+                case INPUT: return DERIVE;
+                default:    return ERROR;
+            }
+        break;
 
     case D:
-        switch (term) {
-        
-        case LET: return DERIVE;
-        default: return ERROR;
-        }
-    break;
-
-    case C:
-        switch (term) {
-        
-        case ID: return DERIVE;
-        case NUM: return DERIVE;
-        case MINUS: return DERIVE;
-        case LB: return DERIVE;
-        default: return ERROR;
+        switch (a_) {
+            case LET: return DERIVE;
+            default:  return ERROR;
         }
     break;
 
     case S:
-        switch (term) {
+        switch (a_) {
+            case ID:    return DERIVE;
+            case IF:    return DERIVE;
+            case GOTO:  return DERIVE;
+            case INPUT: return DERIVE;
+            case PRINT: return DERIVE;
+            default:    return ERROR;
+        }
+    break;
 
-        case ID: return DERIVE;
-        case IF: return DERIVE;
-        case GOTO: return DERIVE;
-        case INPUT: return DERIVE;
-        case PRINT: return DERIVE;
-        default: return ERROR;
+    case LAS:
+        switch (a_) {
+            case ID:    return DERIVE;
+            default:    return ERROR;
+        }
+    break;
+
+    case LA:
+        switch (a_) {
+            case ASSIGMENT: return DERIVE;
+            case COLON:     return DERIVE;
+            default:        return ERROR;
+        }
+    break;
+
+    case IFS:
+        switch (a_) {
+            case IF:    return DERIVE;
+            default:    return ERROR;
+        }
+    break;
+
+    case GOTOS:
+        switch (a_) {
+            case GOTO:  return DERIVE;
+            default:    return ERROR;
+        }
+    break;
+
+    case PRS:
+        switch (a_) {
+            case PRINT:  return DERIVE;
+            default:     return ERROR;
+        }
+    break;
+
+    case INS:
+        switch (a_) {
+            case INPUT:  return DERIVE;
+            default:     return ERROR;
         }
     break;
 
     case E:
-        switch (term) {
-
-        case ID: return DERIVE;
-        case NUM: return DERIVE;
-        case MINUS: return DERIVE;
-        case LB: return DERIVE;
-        default: return ERROR;
+        switch (a_) {
+            case ID:    return DERIVE;
+            case NUM:   return DERIVE;
+            case MINUS: return DERIVE;
+            case LB:    return DERIVE;
+            default:    return ERROR;
         }
     break;
 
     case E_:
-        switch (term) {
-
-        case PLUS: return DERIVE;
-        case MINUS: return DERIVE;
-        case RELOP: return DERIVE;
-        case RB: return DERIVE; // e
-        case GOTO: return DERIVE; // e
-        case DELIM: return DERIVE; /// e
-        default: return ERROR;
+        switch (a_) {
+            case PLUS:  return DERIVE;
+            case MINUS: return DERIVE;
+            case RELOP: return DERIVE; // e
+            case RB:    return DERIVE; // e
+            case GOTO:  return DERIVE; // e
+            case DELIM: return DERIVE; // e
+            default:    return ERROR;
         }
     break;
 
     case T:
-        switch (term) {
-        
-        case ID: return DERIVE;
-        case NUM: return DERIVE;
-        case LB: return DERIVE;
-        case MINUS: return DERIVE;
-        default: return ERROR;
+        switch (a_) {
+            case ID:    return DERIVE;
+            case NUM:   return DERIVE;
+            case LB:    return DERIVE;
+            case MINUS: return DERIVE;
+            default:    return ERROR;
         }
     break;
 
     case T_:
-        switch (term) {
+        switch (a_) {
         
-        case PLUS: return DERIVE; //  e
-        case MINUS: return DERIVE; // e
-        case MUL: return DERIVE;
-        case DIV: return DERIVE;
-        case RELOP: return DERIVE; // e
-        case RB: return DERIVE;    // e
-        case GOTO: return DERIVE;  // e
-        case DELIM: return DERIVE; // e
-        default: return ERROR;
+            case MUL:   return DERIVE;
+            case DIV:   return DERIVE;
+            case PLUS:  return DERIVE; // e
+            case MINUS: return DERIVE; // e
+            case RELOP: return DERIVE; // e
+            case RB:    return DERIVE; // e
+            case GOTO:  return DERIVE; // e
+            case DELIM: return DERIVE; // e
+            default:    return ERROR;
         }
     break;
 
     case F:
-        switch (term) {
-        
-        case ID: return DERIVE;
-        case NUM: return DERIVE;
-        case MINUS: return DERIVE;
-        case LB: return DERIVE;
-        default: return ERROR;
+        switch (a_) {
+            case ID:    return DERIVE;
+            case NUM:   return DERIVE;
+            case MINUS: return DERIVE;
+            case LB:    return DERIVE;
+            default:    return ERROR;
         }
     break;
-
     }
 }
 
-void LL1Parser::derive(Symbol nonterm, Symbol term) {
-    switch (nonterm) {
+void LL1Parser::insert_in_tree()
+{
+    switch (curr_symbol_) {
+        case E:
+            if (tree_.is_empty()) {
+                ASTNode* expr  = new ASTNode(E);
+                ASTNode* term  = new ASTNode(T);
+                ASTNode* expr_ = new ASTNode(E_);
 
-    case P:
-        switch (term) {
-        
-        // prog -> lines
-        case NUM:
-            stack_.push(LS);
+                tree_.insert_root(expr, {term, expr_});
+            } else {
+                ASTNode* term  = new ASTNode(T);
+                ASTNode* expr_ = new ASTNode(E_);
+
+                tree_.hang_to_curr_node({term, expr_});
+            }
         break;
 
-        // prog -> e
-        case END:
-        // do nothing
+        case E_:
+            switch (a_) {
+                case PLUS: 
+                {
+                    ASTNode* plus  = new ASTNode(PLUS);
+                    ASTNode* term  = new ASTNode(T);
+                    ASTNode* expr_ = new ASTNode(E_);
+
+                    tree_.hang_to_curr_node({plus, term, expr_});
+                    tree_.push_up_curr_node();
+                }
+                break;
+
+                case MINUS:
+                {
+                    ASTNode* minus = new ASTNode(MINUS);
+                    ASTNode* term  = new ASTNode(T);
+                    ASTNode* expr_ = new ASTNode(E_);
+
+                    tree_.hang_to_curr_node({minus, term, expr_});
+                    tree_.push_up_curr_node();
+                }
+                break;
+
+                case RELOP:
+                case RB:
+                case GOTO:
+                case DELIM:
+                    tree_.push_up_curr_node();
+                break;
+            }
         break;
+
+        case T:
+        {
+            ASTNode* factor = new ASTNode(F);
+            ASTNode* term_  = new ASTNode(T_);
+
+            tree_.hang_to_curr_node({factor, term_});
         }
-    break;
-
-    case LS:
-        switch (term) {
-        
-        // lines -> line lines
-        case NUM:
-            stack_.push(LS);
-            stack_.push(L);
         break;
 
-        case END:
-        // do nothing
-        break;
-        }
-    break;
+        case T_:
+            switch (a_) {
+                case MUL:
+                {
+                    ASTNode* mul    = new ASTNode(MUL);
+                    ASTNode* factor = new ASTNode(F);
+                    ASTNode* term_  = new ASTNode(T_);
 
-    case L:
-        switch (term) {
-            // line -> num linebody
-            case NUM:
-            stack_.push(DELIM);
-            stack_.push(LBODY);
-            stack_.push(NUM);
+                    tree_.hang_to_curr_node({mul, factor, term_});
+                    tree_.push_up_curr_node();
+                }
+                break;
+
+                case DIV:
+                {
+                    ASTNode* div    = new ASTNode(DIV);
+                    ASTNode* factor = new ASTNode(F);
+                    ASTNode* term_  = new ASTNode(T_);
+
+                    tree_.hang_to_curr_node({div, factor, term_});
+                    tree_.push_up_curr_node();
+                }
+                break;
+
+                case RELOP:
+                case RB:
+                case GOTO:
+                case DELIM:
+                case PLUS:
+                case MINUS:
+                    tree_.push_up_curr_node();
+                break;
+            }
+        break;
+
+        case F:
+            switch (a_) {
+                case NUM:
+                case ID:
+                {
+                    Leaf* l = new Leaf(ip_);
+                    
+                    tree_.hang_to_curr_node({l});
+                    tree_.push_up_curr_node();
+                }
+                break;
+
+                case MINUS:
+                {
+                    ASTNode* minus = new ASTNode(MINUS);
+                    ASTNode* factor = new ASTNode(F);
+
+                    tree_.hang_to_curr_node({minus, factor});
+                    tree_.push_up_curr_node();
+                }
+                break;
+
+                case LB:
+                {
+                    ASTNode* lbrace = new ASTNode(LB);
+                    ASTNode* expr = new ASTNode(E);
+                    ASTNode* rbrace = new ASTNode(RB);
+
+                    tree_.hang_to_curr_node({lbrace, expr, rbrace});
+                    tree_.push_up_curr_node();
+                }
+                break;
+            }
+        break;
+    }
+}
+
+void LL1Parser::derive() 
+{
+    switch (curr_symbol_) {
+
+        case P:
+            switch (a_) {
+                case LET:       
+                case ID:    
+                case IF:    
+                case GOTO:  
+                case PRINT:
+                case INPUT:
+                    // prog -> line_
+                    stack_.push(L_);
+                break;
+                case END:  
+                    // prog -> e
+                break;
+            }
+        break;
+
+        case L_:
+            switch (a_) {
+                case LET:       
+                case ID:    
+                case IF:    
+                case GOTO:  
+                case PRINT: 
+                case INPUT:
+                    // line_ -> line line_
+                    stack_.push(L_);
+                    stack_.push(L);
+                break;
+                case END:   
+                    // line_ -> e
+                break;
+            }
+        break;
+
+        case L:
+            switch (a_) {
+                case LET:
+                    stack_.push(DELIM);
+                    stack_.push(D);
+                break;
+
+                case ID:
+                case IF:
+                case GOTO:
+                case INPUT:
+                case PRINT:
+                    stack_.push(S);
+                break;
+            }
+        break;
+
+    case S:
+        switch (a_) {
+
+            // stmt -> las
+            case ID:
+                stack_.push(LAS); 
+            break;
+
+            // stmt -> ifstm
+            case IF:
+                stack_.push(DELIM);
+                stack_.push(IFS);
+            break;
+
+            // stmt -> gotostmt;
+            case GOTO:
+                stack_.push(DELIM);
+                stack_.push(GOTOS);
+            break;
+
+            // stmt -> inputstmt;
+            case INPUT:
+                stack_.push(DELIM);
+                stack_.push(INS);
+            break;
+
+            // stmt -> printstmt;
+            case PRINT:
+                stack_.push(DELIM);
+                stack_.push(PRS);
             break;
         }
     break;
 
-    case LBODY:
-        switch (term) {
-        
-        case LET:
-            stack_.push(D);
-        break;
+    case LAS:
+        stack_.push(LA);
+        stack_.push(ID);
+    break;
 
-        case ID:
-        case IF:
-        case GOTO:
-        case INPUT:
-        case PRINT:
-            stack_.push(S);
-        break;
+    case LA:
+        switch (a_) {
+            case COLON:
+                stack_.push(COLON);
+            break;
+
+            case ASSIGMENT:
+                stack_.push(DELIM);
+                stack_.push(E);
+                stack_.push(ASSIGMENT);
+            break;
         }
     break;
 
-    case S:
-        switch (term) {
-        
-        // stmt -> id = expr
-        case ID:
-            stack_.push(E);
-            stack_.push(ASSIGMENT);
-            stack_.push(ID);
-        break;
+    case IFS:
+        stack_.push(ID);
+        stack_.push(GOTO);
+        stack_.push(E);
+        stack_.push(RELOP);
+        stack_.push(E);
+        stack_.push(IF);
+    break;
 
-        // stmt -> if cmpexpr goto num
-        case IF:
-            stack_.push(NUM);
-            stack_.push(GOTO);
-            stack_.push(C);
-            stack_.push(IF);
-        break;
+    case GOTOS:
+        stack_.push(ID);
+        stack_.push(GOTO);
+    break;
 
-        // stmt -> goto num
-        case GOTO:
-            stack_.push(NUM);
-            stack_.push(GOTO);
-        break;
+    case PRS:
+        stack_.push(ID);
+        stack_.push(PRINT);
+    break;
 
-        // stmt -> input id
-        case INPUT:
-            stack_.push(ID);
-            stack_.push(INPUT);
-        break;
-
-        // stmt -> print id
-        case PRINT:
-            stack_.push(ID);
-            stack_.push(PRINT);
-        break;
-        }
+    case INS:
+        stack_.push(ID);
+        stack_.push(INPUT);
     break;
 
     case D:
-        switch (term) {
+        switch (a_) {
         
         case LET:
             stack_.push(E);
@@ -284,23 +472,8 @@ void LL1Parser::derive(Symbol nonterm, Symbol term) {
         }
     break;
 
-    case C:
-        switch (term) {
-
-        // cmpexpr -> expr relop expr
-        case ID:
-        case NUM:
-        case MINUS:
-        case LB:
-            stack_.push(E);
-            stack_.push(RELOP);
-            stack_.push(E);
-        break;
-        }
-    break;
-
     case E:
-        switch (term) {
+        switch (a_) {
 
         // expr -> term expr_
         case ID:
@@ -314,32 +487,30 @@ void LL1Parser::derive(Symbol nonterm, Symbol term) {
     break;
 
     case E_:
-        switch (term) {
+        switch (a_) {
         
-        // expr_ -> term expr_
-        case PLUS:
-            stack_.push(E_);
-            stack_.push(T);
-            stack_.push(PLUS);
-        break;
-        case MINUS:
-            stack_.push(E_);
-            stack_.push(T);
-            stack_.push(MINUS);
-        break;
+            case PLUS:
+                stack_.push(E_);
+                stack_.push(T);
+                stack_.push(PLUS);
+            break;
+            case MINUS:
+                stack_.push(E_);
+                stack_.push(T);
+                stack_.push(MINUS);
+            break;
 
-        // expr_ -> e
-        case RELOP:
-        case RB:
-        case GOTO:
-        case DELIM:
-        // do nothing
-        break;
+            // expr_ -> e
+            case RELOP:
+            case RB:
+            case GOTO:
+            case DELIM:
+            break;
         }
     break;
 
     case T:
-        switch (term) {
+        switch (a_) {
         
         // term -> factor term_
         case ID:
@@ -353,84 +524,84 @@ void LL1Parser::derive(Symbol nonterm, Symbol term) {
     break;
 
     case T_:
-        switch (term) {
+        switch (a_) {
         
-        // term_ -> factor term_
-        case MUL:
-            stack_.push(T_);
-            stack_.push(F);
-            stack_.push(MUL);
-        break;
+            case MUL:
+                stack_.push(T_);
+                stack_.push(F);
+                stack_.push(MUL);
+            break;
 
-        case DIV:
-            stack_.push(T_);
-            stack_.push(F);
-            stack_.push(DIV);
-        break;
+            case DIV:
+                stack_.push(T_);
+                stack_.push(F);
+                stack_.push(DIV);
+            break;
 
-        // term_ -> e
-        case PLUS:
-        case MINUS:
-        case RELOP:
-        case RB:
-        case GOTO:
-        case DELIM:
-        // do nothing
-        break;
+            // term_ -> e
+            case PLUS:
+            case MINUS:
+            case RELOP:
+            case RB:
+            case GOTO:
+            case DELIM:
+            // do nothing
+            break;
         }
     break;
 
     case F:
-        switch (term) {
+        switch (a_) {
         
-        // factor -> id | num | (expr) | negfactor
-        case ID:
-            stack_.push(ID);
+        // factor -> id | num | (expr) | -factor 
+            case ID:
+                stack_.push(ID);
             break;
-        case NUM:
-            stack_.push(NUM);
+            case NUM:
+                stack_.push(NUM);
             break;
-        case LB:
-            stack_.push(RB);
-            stack_.push(E);
-            stack_.push(LB);
+            case LB:
+                stack_.push(RB);
+                stack_.push(E);
+                stack_.push(LB);
             break;
-        case MINUS:
-            stack_.push(F);
-            stack_.push(MINUS);
+            case MINUS:
+                stack_.push(F);
+                stack_.push(MINUS);
             break;
+        
         }
     break;
 
     }
 }
 
-void LL1Parser::parse() {
+void LL1Parser::parse() 
+{
     while (curr_symbol_ != Symbol::END) {
         a_ = ip_->term;
-
         if (curr_symbol_ == a_) {
             stack_.pop();
-            scanned_tokens_.push_back(ip_);
             ip_ = lex_->get_token();
         }
         // error case
-        else if (isterminal_(curr_symbol_)) {
+        else if (is_terminal(curr_symbol_)) {
             error();
         }
 
         // error case 
-        else if (ERROR == M_(curr_symbol_, a_)) {
+        else if (ERROR == M_()) {
             error();
         } 
 
-        else if (SYNCH == M_(curr_symbol_, a_)) {
+        else if (SYNCH == M_()) {
 
         }
 
-        else if (DERIVE == M_(curr_symbol_, a_)) {
+        else if (DERIVE == M_()) {
+            insert_in_tree();
             stack_.pop();
-            derive(curr_symbol_, a_);
+            derive();
         }
 
         curr_symbol_ = stack_.top();

@@ -10,7 +10,6 @@ struct Token {
     Symbol term;
 
     explicit Token(Symbol t);
-    friend std::ostream& operator<<(std::ostream& os, const Token& tok);
     Token(const Token&) = default;
     Token(Token &&) = default;
 

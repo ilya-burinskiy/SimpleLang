@@ -10,7 +10,10 @@ set(SCC_SRCS ${SCC_SRC_DIR}/main.cpp
              ${SCC_SRC_DIR}/num.cpp
              ${SCC_SRC_DIR}/relop.cpp    
              ${SCC_SRC_DIR}/lexer.cpp
-             ${SCC_SRC_DIR}/ll1parser.cpp)
+             ${SCC_SRC_DIR}/ll1parser.cpp
+             ${SCC_SRC_DIR}/astnode.cpp
+             ${SCC_SRC_DIR}/symbols.cpp)
+
 
 include_directories("${SCC_INC_DIR}")
 add_executable(scc ${SCC_SRCS})
