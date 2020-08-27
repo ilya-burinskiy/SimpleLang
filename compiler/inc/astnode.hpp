@@ -12,7 +12,7 @@ struct ASTNode {
     std::list<ASTNode*>           children;
     std::list<ASTNode*>::iterator curr_child;
 
-    ASTNode(Symbol s);
+    ASTNode(Symbol s = EPS);
     ASTNode(const ASTNode& other) = delete;
     ASTNode& operator=(const ASTNode& other) = delete;
     virtual ~ASTNode();
@@ -20,7 +20,8 @@ struct ASTNode {
 
 struct Leaf: ASTNode {
     Token* tok;
-    Leaf(Token* t);
+
+    Leaf(Symbol s, Token* t = nullptr);
     ~Leaf();
 };
 
@@ -34,10 +35,12 @@ public:
     AST();
     ~AST();
     void delete_sub_tree(ASTNode* subtree_root);
-    void insert_root(ASTNode* root, std::list<ASTNode*>&& children);
-    void hang_to_curr_node(std::list<ASTNode*>&& children);
+
+    void insert_token(Token* tok);
+    void insert_root(ASTNode* node);
     void push_up_curr_node();
-    void postorder_traverse(ASTNode* start) const;
+    void hang_to_curr_node(std::list<ASTNode*>&& children);
+
     bool is_empty() const;
     ASTNode* get_curr_node();
     ASTNode* get_root();

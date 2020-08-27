@@ -19,7 +19,7 @@ private:
         SYNCH   // for synchronisation if error happened
     } ParserState;
 
-    LL1Parser();
+    LL1Parser(const char* fname);
     Lexer*             lex_;
     std::stack<Symbol> stack_; 
     Token*             ip_;
@@ -35,7 +35,7 @@ private:
     void insert_in_tree();
 
 public:
-    static LL1Parser* get_instance();
+    static LL1Parser* get_instance(const char* fname);
 
     void set_curr_tok(Token*);
     void parse();

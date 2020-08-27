@@ -4,11 +4,11 @@
 #include <ostream>
 
 // Don't change symbols positions because
-// isterminal function in ll1parser class will not work
+// isterminal function will not work
 typedef enum {
     // Terminals:
     LET, INPUT, PRINT, GOTO, IF, 
-    ID, NUM, PLUS, MINUS, MUL, DIV, ASSIGMENT,
+    ID, NUM, PLUS, MINUS, UMINUS, MUL, DIV, ASSIGMENT,
     RELOP, LB, RB, DELIM, COLON,
 
     // Nonterminals:
@@ -17,7 +17,7 @@ typedef enum {
     L,      // line
     D,      // definition
     S,      // statement
-    LAS,    // label or assigment statemen
+    LAS,    // label or assigment statement
     IFS,    // if statement
     GOTOS,  // goto statememt 
     PRS,    // print stmt
@@ -31,11 +31,13 @@ typedef enum {
     T_,     // (left reqursion elimination)
     F,      // factor 
 
-    // special grammar symbpol $
-    END,
+    // special grammar symbpol e and $
+    EPS, END,
 } Symbol;
 
 
 bool is_terminal(Symbol s);
+bool is_bin_ariph_op(Symbol s);
 std::ostream& operator<<(std::ostream& os, Symbol s);
+
 #endif

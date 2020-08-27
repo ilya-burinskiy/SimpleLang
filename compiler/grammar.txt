@@ -1,15 +1,15 @@
 prog    -> line_ | e
 line_   -> line line_ | e
-line    -> stmt | def;
+line    -> stmt | def
 
 
-def     -> let id = expr
+def     -> let id = expr;
 
 stmt    -> LAstmt      // label or assigment stmt
-        |  ifstmt;
-        |  gotostmt;
-        |  inputstmt;
-        |  printstmt;
+        |  ifstmt
+        |  gotostmt
+        |  inputstmt
+        |  printstmt
 
 LAstmt -> id LA        // label or assigment
 LA     -> assigment 
@@ -18,10 +18,10 @@ LA     -> assigment
 label     -> :
 assigment -> = expr;
 
-ifstmt    -> if expr relop expr goto id
-gotostmt  -> goto label
-inputstmt -> input id
-printstmt -> print id
+ifstmt    -> if expr relop expr goto id;
+gotostmt  -> goto label;
+inputstmt -> input id;
+printstmt -> print id;
 
 expr   -> term exr_
 exr_   -> + term exrp_ 
@@ -33,7 +33,7 @@ term_  -> * factor term_
        |  / factor term_
        | e
 
-factor -> (expr) | num | id | -factor 
+factor -> (expr) | num | id | -u factor 
 
 FIRST(prog)      = {FIRST(line), e}  = {let, id, if, goto, print, input, e}
 FIRST(line_)     = {FIRST(line), e}  = {let, id, if, goto, print, input, e}
@@ -50,15 +50,15 @@ FIRST(gotostmt)  = {goto}
 FIRST(inputstmt) = {input}
 FIRST(printstmt) = {print}
 
-FIRST(expr)      = {(, num, id, -}
+FIRST(expr)      = {(, num, id, -u}
 FIRST(expr_)     = {+, -, e}
-FIRST(term)      = {(, num, id, -}
+FIRST(term)      = {(, num, id, -u}
 FIRST(term_)     = {*, /, e}
-FIRST(factor)    = {(, num, id, -}
+FIRST(factor)    = {(, num, id, -u}
 
 FOLLOW(factor)    = {+, -, *, /, ), relop, goto, ;}
-FOLLOW(term_)     = {+, -, ), relop, goto, ;}
-FOLLOW(term)      = {+, -, ), relop, goto, ;}
+FOLLOW(term_)     = {+, -, -u, ), relop, goto, ;}
+FOLLOW(term)      = {+, -, -u, ), relop, goto, ;}
 FOLLOW(expr_)     = {), relop, goto, ;}
 FOLLOW(expr)      = {), relop, goto, ;}
 FOLLOW(printstmt) = FOLLOW(inputstmt) = FOLLOW(gotostmt) = FOLLOW(ifstmt) = {;}

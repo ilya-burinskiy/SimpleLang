@@ -4,7 +4,7 @@
 
 #include <list>
 #include <typeinfo>
-
+#include <exception>
 #include <iostream>
 
 using std::cout;
@@ -13,29 +13,33 @@ using std::list;
 
 LL1Parser* LL1Parser::instance = nullptr;
 
-LL1Parser* LL1Parser::get_instance() 
+LL1Parser* LL1Parser::get_instance(const char* fname) 
 {
     if (instance == nullptr)
-        instance = new LL1Parser();
+        instance = new LL1Parser(fname);
     return instance;
 }
 
 
-LL1Parser::LL1Parser(): ip_{nullptr}, tree_()
+LL1Parser::LL1Parser(const char* fname): ip_{nullptr}, tree_()
 {
     stack_.push(Symbol::END);
     stack_.push(Symbol::P);
     curr_symbol_ = stack_.top();
 
-    lex_ = Lexer::get_instance();
-    lex_->load_buf("test.txt");
+    lex_ = Lexer::get_instance(fname);
+    lex_->load_buf();
     ip_ = lex_->get_token();
     a_ = ip_->term;
 }
 
 void LL1Parser::error() 
 {
+    delete ip_;
+    delete lex_;
+    tree_.~AST();
 
+    throw "error";
 }
 
 AST LL1Parser::get_tree()
@@ -139,7 +143,7 @@ LL1Parser::ParserState LL1Parser::M_()
         switch (a_) {
             case ID:    return DERIVE;
             case NUM:   return DERIVE;
-            case MINUS: return DERIVE;
+            case UMINUS: return DERIVE;
             case LB:    return DERIVE;
             default:    return ERROR;
         }
@@ -149,6 +153,7 @@ LL1Parser::ParserState LL1Parser::M_()
         switch (a_) {
             case PLUS:  return DERIVE;
             case MINUS: return DERIVE;
+            case UMINUS: return DERIVE; // e
             case RELOP: return DERIVE; // e
             case RB:    return DERIVE; // e
             case GOTO:  return DERIVE; // e
@@ -162,7 +167,7 @@ LL1Parser::ParserState LL1Parser::M_()
             case ID:    return DERIVE;
             case NUM:   return DERIVE;
             case LB:    return DERIVE;
-            case MINUS: return DERIVE;
+            case UMINUS: return DERIVE;
             default:    return ERROR;
         }
     break;
@@ -174,6 +179,7 @@ LL1Parser::ParserState LL1Parser::M_()
             case DIV:   return DERIVE;
             case PLUS:  return DERIVE; // e
             case MINUS: return DERIVE; // e
+            case UMINUS: return DERIVE; // e
             case RELOP: return DERIVE; // e
             case RB:    return DERIVE; // e
             case GOTO:  return DERIVE; // e
@@ -184,145 +190,13 @@ LL1Parser::ParserState LL1Parser::M_()
 
     case F:
         switch (a_) {
-            case ID:    return DERIVE;
-            case NUM:   return DERIVE;
-            case MINUS: return DERIVE;
-            case LB:    return DERIVE;
-            default:    return ERROR;
+            case ID:     return DERIVE;
+            case NUM:    return DERIVE;
+            case UMINUS: return DERIVE;
+            case LB:     return DERIVE;
+            default:     return ERROR;
         }
     break;
-    }
-}
-
-void LL1Parser::insert_in_tree()
-{
-    switch (curr_symbol_) {
-        case E:
-            if (tree_.is_empty()) {
-                ASTNode* expr  = new ASTNode(E);
-                ASTNode* term  = new ASTNode(T);
-                ASTNode* expr_ = new ASTNode(E_);
-
-                tree_.insert_root(expr, {term, expr_});
-            } else {
-                ASTNode* term  = new ASTNode(T);
-                ASTNode* expr_ = new ASTNode(E_);
-
-                tree_.hang_to_curr_node({term, expr_});
-            }
-        break;
-
-        case E_:
-            switch (a_) {
-                case PLUS: 
-                {
-                    ASTNode* plus  = new ASTNode(PLUS);
-                    ASTNode* term  = new ASTNode(T);
-                    ASTNode* expr_ = new ASTNode(E_);
-
-                    tree_.hang_to_curr_node({plus, term, expr_});
-                    tree_.push_up_curr_node();
-                }
-                break;
-
-                case MINUS:
-                {
-                    ASTNode* minus = new ASTNode(MINUS);
-                    ASTNode* term  = new ASTNode(T);
-                    ASTNode* expr_ = new ASTNode(E_);
-
-                    tree_.hang_to_curr_node({minus, term, expr_});
-                    tree_.push_up_curr_node();
-                }
-                break;
-
-                case RELOP:
-                case RB:
-                case GOTO:
-                case DELIM:
-                    tree_.push_up_curr_node();
-                break;
-            }
-        break;
-
-        case T:
-        {
-            ASTNode* factor = new ASTNode(F);
-            ASTNode* term_  = new ASTNode(T_);
-
-            tree_.hang_to_curr_node({factor, term_});
-        }
-        break;
-
-        case T_:
-            switch (a_) {
-                case MUL:
-                {
-                    ASTNode* mul    = new ASTNode(MUL);
-                    ASTNode* factor = new ASTNode(F);
-                    ASTNode* term_  = new ASTNode(T_);
-
-                    tree_.hang_to_curr_node({mul, factor, term_});
-                    tree_.push_up_curr_node();
-                }
-                break;
-
-                case DIV:
-                {
-                    ASTNode* div    = new ASTNode(DIV);
-                    ASTNode* factor = new ASTNode(F);
-                    ASTNode* term_  = new ASTNode(T_);
-
-                    tree_.hang_to_curr_node({div, factor, term_});
-                    tree_.push_up_curr_node();
-                }
-                break;
-
-                case RELOP:
-                case RB:
-                case GOTO:
-                case DELIM:
-                case PLUS:
-                case MINUS:
-                    tree_.push_up_curr_node();
-                break;
-            }
-        break;
-
-        case F:
-            switch (a_) {
-                case NUM:
-                case ID:
-                {
-                    Leaf* l = new Leaf(ip_);
-                    
-                    tree_.hang_to_curr_node({l});
-                    tree_.push_up_curr_node();
-                }
-                break;
-
-                case MINUS:
-                {
-                    ASTNode* minus = new ASTNode(MINUS);
-                    ASTNode* factor = new ASTNode(F);
-
-                    tree_.hang_to_curr_node({minus, factor});
-                    tree_.push_up_curr_node();
-                }
-                break;
-
-                case LB:
-                {
-                    ASTNode* lbrace = new ASTNode(LB);
-                    ASTNode* expr = new ASTNode(E);
-                    ASTNode* rbrace = new ASTNode(RB);
-
-                    tree_.hang_to_curr_node({lbrace, expr, rbrace});
-                    tree_.push_up_curr_node();
-                }
-                break;
-            }
-        break;
     }
 }
 
@@ -331,6 +205,7 @@ void LL1Parser::derive()
     switch (curr_symbol_) {
 
         case P:
+        {
             switch (a_) {
                 case LET:       
                 case ID:    
@@ -338,16 +213,27 @@ void LL1Parser::derive()
                 case GOTO:  
                 case PRINT:
                 case INPUT:
+                {
+                    // root of AST
+                    auto prog = new ASTNode(P);
+                    tree_.insert_root(prog);
+
                     // prog -> line_
+                    auto l_ = new ASTNode(L_);
+                    tree_.hang_to_curr_node({l_});
+
                     stack_.push(L_);
+                }
                 break;
-                case END:  
-                    // prog -> e
+
+                case END:
                 break;
             }
+        }
         break;
 
         case L_:
+        {
             switch (a_) {
                 case LET:       
                 case ID:    
@@ -355,21 +241,34 @@ void LL1Parser::derive()
                 case GOTO:  
                 case PRINT: 
                 case INPUT:
+                {
                     // line_ -> line line_
+                    auto l = new ASTNode(L);
+                    auto l_ = new ASTNode(L_);
+                    tree_.hang_to_curr_node({l, l_});
+
                     stack_.push(L_);
                     stack_.push(L);
+                }
                 break;
-                case END:   
-                    // line_ -> e
+
+                case END:
+                    tree_.push_up_curr_node();
                 break;
             }
+        }
         break;
 
         case L:
+        {
             switch (a_) {
                 case LET:
-                    stack_.push(DELIM);
+                {
+                    auto d = new ASTNode(D);
+                    tree_.hang_to_curr_node({d});
+
                     stack_.push(D);
+                }
                 break;
 
                 case ID:
@@ -377,213 +276,379 @@ void LL1Parser::derive()
                 case GOTO:
                 case INPUT:
                 case PRINT:
+                {
+                    auto s = new ASTNode(S);
+                    tree_.hang_to_curr_node({s});
+
                     stack_.push(S);
+                }
                 break;
             }
+        }
         break;
 
-    case S:
-        switch (a_) {
+        case S:
+        {
+            switch (a_) {
 
-            // stmt -> las
-            case ID:
-                stack_.push(LAS); 
-            break;
+                // stmt -> las
+                case ID:
+                {
+                    auto las = new ASTNode(LAS);
+                    tree_.hang_to_curr_node({las});
+                    stack_.push(LAS); 
+                }
+                break;
 
-            // stmt -> ifstm
-            case IF:
-                stack_.push(DELIM);
-                stack_.push(IFS);
-            break;
+                // stmt -> ifstm
+                case IF:
+                {    
+                    auto ifs = new ASTNode(IFS);
+                    tree_.hang_to_curr_node({ifs});
 
-            // stmt -> gotostmt;
-            case GOTO:
-                stack_.push(DELIM);
-                stack_.push(GOTOS);
-            break;
+                    stack_.push(IFS);
+                }
+                break;
 
-            // stmt -> inputstmt;
-            case INPUT:
-                stack_.push(DELIM);
-                stack_.push(INS);
-            break;
+                // stmt -> gotostmt;
+                case GOTO:
+                {
+                    auto gotos = new ASTNode(GOTOS);
+                    tree_.hang_to_curr_node({gotos});
 
-            // stmt -> printstmt;
-            case PRINT:
-                stack_.push(DELIM);
-                stack_.push(PRS);
-            break;
+                    stack_.push(GOTOS);
+                }
+                break;
+
+                // stmt -> inputstmt;
+                case INPUT:
+                {
+                    auto inputs = new ASTNode(INS);
+                    tree_.hang_to_curr_node({inputs});
+
+                    stack_.push(INS);
+                }
+                break;
+
+                // stmt -> printstmt;
+                case PRINT:
+                {
+                    auto prints = new ASTNode(PRS);
+                    tree_.hang_to_curr_node({prints});
+
+                    stack_.push(PRS);
+                }
+                break;
+            }
         }
-    break;
+        break;
 
-    case LAS:
-        stack_.push(LA);
-        stack_.push(ID);
-    break;
+        case LAS:
+        {
+            auto id = new Leaf(ID);
+            auto la = new ASTNode(LA);
+            tree_.hang_to_curr_node({id, la});
 
-    case LA:
-        switch (a_) {
-            case COLON:
-                stack_.push(COLON);
-            break;
-
-            case ASSIGMENT:
-                stack_.push(DELIM);
-                stack_.push(E);
-                stack_.push(ASSIGMENT);
-            break;
+            stack_.push(LA);
+            stack_.push(ID);
         }
-    break;
+        break;
 
-    case IFS:
-        stack_.push(ID);
-        stack_.push(GOTO);
-        stack_.push(E);
-        stack_.push(RELOP);
-        stack_.push(E);
-        stack_.push(IF);
-    break;
+        case LA:
+        {
+            switch (a_) {
+                case COLON:
+                {
+                    auto colon = new Leaf(COLON);
+                    tree_.hang_to_curr_node({colon});
 
-    case GOTOS:
-        stack_.push(ID);
-        stack_.push(GOTO);
-    break;
+                    stack_.push(COLON);
+                }
+                break;
 
-    case PRS:
-        stack_.push(ID);
-        stack_.push(PRINT);
-    break;
+                case ASSIGMENT:
+                {
+                    auto assgmt = new Leaf(ASSIGMENT);
+                    auto e = new ASTNode(E);
+                    auto delim = new Leaf(DELIM);
+                    tree_.hang_to_curr_node({assgmt, e, delim});
 
-    case INS:
-        stack_.push(ID);
-        stack_.push(INPUT);
-    break;
+                    stack_.push(DELIM);
+                    stack_.push(E);
+                    stack_.push(ASSIGMENT);
+                }
+                break;
+            }
+        }
+        break;
 
-    case D:
-        switch (a_) {
-        
-        case LET:
+        case IFS:
+        {
+            auto if_ = new Leaf(IF);
+            auto e1 = new ASTNode(E);
+            auto relop = new Leaf(RELOP);
+            auto e2 = new ASTNode(E);
+            auto goto_ = new Leaf(GOTO);
+            auto id = new Leaf(ID);
+            auto delim = new Leaf(DELIM);
+            tree_.hang_to_curr_node({if_, e1, relop, e2, goto_, id, delim});
+
+            stack_.push(DELIM);
+            stack_.push(ID);
+            stack_.push(GOTO);
+            stack_.push(E);
+            stack_.push(RELOP);
+            stack_.push(E);
+            stack_.push(IF);
+        }
+        break;
+
+        case GOTOS:
+        {
+            auto goto_leaf = new Leaf(GOTO);
+            auto id = new Leaf(ID); 
+            auto delim = new Leaf(DELIM);
+            tree_.hang_to_curr_node({goto_leaf, id, delim});
+
+            stack_.push(DELIM);
+            stack_.push(ID);
+            stack_.push(GOTO);
+        }
+        break;
+
+        case PRS:
+        {
+            auto print = new Leaf(PRINT);
+            auto id = new Leaf(ID);
+            auto delim = new Leaf(DELIM);
+            tree_.hang_to_curr_node({print, id, delim});
+
+            stack_.push(DELIM);
+            stack_.push(ID);
+            stack_.push(PRINT);
+        }
+        break;
+
+        case INS:
+        {
+            auto input = new Leaf(INPUT);
+            auto id = new Leaf(ID);
+            auto delim = new Leaf(DELIM);
+            tree_.hang_to_curr_node({input, id, delim});
+
+            stack_.push(DELIM);
+            stack_.push(ID);
+            stack_.push(INPUT);
+        }
+        break;
+
+        case D:
+        {
+            auto let = new Leaf(LET);
+            auto id = new Leaf(ID);
+            auto assgmt = new Leaf(ASSIGMENT);
+            auto e = new ASTNode(E);
+            auto delim = new Leaf(DELIM);
+            tree_.hang_to_curr_node({let, id, assgmt, e, delim});
+
+            stack_.push(DELIM);
             stack_.push(E);
             stack_.push(ASSIGMENT);
             stack_.push(ID);
             stack_.push(LET);
+
+        }
         break;
 
+        case E:
+        {
+            switch (a_) {
+
+                // expr -> term expr_
+                case ID:
+                case NUM:
+                case UMINUS:
+                case LB:
+                {
+                    auto t = new ASTNode(T);
+                    auto e_ = new ASTNode(E_);
+                    tree_.hang_to_curr_node({t, e_});
+
+                    stack_.push(E_);
+                    stack_.push(T);
+                }
+                break;
+            }
         }
-    break;
-
-    case E:
-        switch (a_) {
-
-        // expr -> term expr_
-        case ID:
-        case NUM:
-        case MINUS:
-        case LB:
-            stack_.push(E_);
-            stack_.push(T);
         break;
+
+        case E_:
+        {
+            switch (a_) {
+                case PLUS:
+                {
+                    auto plus = new Leaf(PLUS);
+                    auto t = new ASTNode(T);
+                    auto e_ = new ASTNode(E_);
+
+                    tree_.hang_to_curr_node({plus, t, e_});
+
+                    stack_.push(E_);
+                    stack_.push(T);
+                    stack_.push(PLUS);
+                }
+                break;
+
+                case MINUS:
+                {
+                    auto minus = new Leaf(MINUS);
+                    auto t = new ASTNode(T);
+                    auto e_ = new ASTNode(E_);
+                    tree_.hang_to_curr_node({minus, t, e_});
+
+                    stack_.push(E_);
+                    stack_.push(T);
+                    stack_.push(MINUS);
+                }
+                break;
+
+                case RB:
+                case RELOP:
+                case GOTO:
+                case DELIM:
+                    tree_.push_up_curr_node();
+                break;
+            }
         }
-    break;
-
-    case E_:
-        switch (a_) {
-        
-            case PLUS:
-                stack_.push(E_);
-                stack_.push(T);
-                stack_.push(PLUS);
-            break;
-            case MINUS:
-                stack_.push(E_);
-                stack_.push(T);
-                stack_.push(MINUS);
-            break;
-
-            // expr_ -> e
-            case RELOP:
-            case RB:
-            case GOTO:
-            case DELIM:
-            break;
-        }
-    break;
-
-    case T:
-        switch (a_) {
-        
-        // term -> factor term_
-        case ID:
-        case NUM:
-        case MINUS:
-        case LB:
-            stack_.push(T_);
-            stack_.push(F);
         break;
+
+        case T:
+        {
+            switch (a_) {
+            
+                // term -> factor term_
+                case ID:
+                case NUM:
+                case UMINUS:
+                case LB:
+                {
+                    auto f = new ASTNode(F);
+                    auto t_ = new ASTNode(T_);
+                    tree_.hang_to_curr_node({f, t_});
+
+                    stack_.push(T_);
+                    stack_.push(F);
+                }
+                break;
+            }
         }
-    break;
+        break;
 
-    case T_:
-        switch (a_) {
-        
-            case MUL:
-                stack_.push(T_);
-                stack_.push(F);
-                stack_.push(MUL);
-            break;
+        case T_:
+        {
+            switch (a_) {
+                case MUL:
+                {
+                    auto mul = new Leaf(MUL);
+                    auto f = new ASTNode(F);
+                    auto t_ = new ASTNode(T_);
+                    tree_.hang_to_curr_node({mul, f, t_});
 
-            case DIV:
-                stack_.push(T_);
-                stack_.push(F);
-                stack_.push(DIV);
-            break;
+                    stack_.push(T_);
+                    stack_.push(F);
+                    stack_.push(MUL);
+                }
+                break;
 
-            // term_ -> e
-            case PLUS:
-            case MINUS:
-            case RELOP:
-            case RB:
-            case GOTO:
-            case DELIM:
-            // do nothing
-            break;
+                case DIV:
+                {
+                    auto div = new Leaf(DIV);
+                    auto f = new ASTNode(F);
+                    auto t_ = new ASTNode(T_);
+                    tree_.hang_to_curr_node({div, f, t_});
+
+                    stack_.push(T_);
+                    stack_.push(F);
+                    stack_.push(DIV);
+                }
+                break;
+
+                case PLUS:
+                case MINUS:
+                case RB:
+                case RELOP:
+                case GOTO:
+                case DELIM:
+                    tree_.push_up_curr_node();
+                break;
+            }
         }
-    break;
+        break;
 
-    case F:
-        switch (a_) {
-        
-        // factor -> id | num | (expr) | -factor 
-            case ID:
-                stack_.push(ID);
-            break;
-            case NUM:
-                stack_.push(NUM);
-            break;
-            case LB:
-                stack_.push(RB);
-                stack_.push(E);
-                stack_.push(LB);
-            break;
-            case MINUS:
-                stack_.push(F);
-                stack_.push(MINUS);
-            break;
-        
+        case F:
+        {
+            switch (a_) {
+            
+                // factor -> id | num | (expr) | -factor 
+                case ID:
+                {
+                    auto id = new Leaf(ID);
+                    tree_.hang_to_curr_node({id});
+
+                    stack_.push(ID);
+                }
+                break;
+
+                case NUM:
+                {
+                    auto num = new Leaf(NUM);
+                    tree_.hang_to_curr_node({num});
+
+                    stack_.push(NUM);
+                }
+                break;
+
+                case LB:
+                {
+                    auto lb = new Leaf(LB);
+                    auto e = new ASTNode(E);
+                    auto rb = new Leaf(RB);
+                    tree_.hang_to_curr_node({lb, e, rb});
+
+                    stack_.push(RB);
+                    stack_.push(E);
+                    stack_.push(LB);
+                }
+                break;
+
+                case UMINUS:
+                { 
+                    auto uminus = new Leaf(UMINUS);
+                    auto f = new ASTNode(F);
+                    tree_.hang_to_curr_node({uminus, f});
+
+                    stack_.push(F);
+                    stack_.push(UMINUS);
+                }
+                break;
+            }
         }
-    break;
+        break;
 
     }
 }
 
 void LL1Parser::parse() 
 {
-    while (curr_symbol_ != Symbol::END) {
+
+    while (curr_symbol_ != END) {
         a_ = ip_->term;
         if (curr_symbol_ == a_) {
+            tree_.insert_token(ip_);
             stack_.pop();
             ip_ = lex_->get_token();
         }
+
         // error case
         else if (is_terminal(curr_symbol_)) {
             error();
@@ -599,7 +664,6 @@ void LL1Parser::parse()
         }
 
         else if (DERIVE == M_()) {
-            insert_in_tree();
             stack_.pop();
             derive();
         }

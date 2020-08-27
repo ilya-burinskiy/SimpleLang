@@ -1,8 +1,6 @@
 #include "astnode.hpp"
 #include "symbols.hpp"
 #include "token.hpp"
-#include "num.hpp"
-#include "word.hpp"
 
 #include <list>
 #include <iostream>
@@ -21,15 +19,17 @@ ASTNode::ASTNode(Symbol s): symbol(s),
 
 ASTNode::~ASTNode()
 {
+
 }
 
-Leaf::Leaf(Token* t): ASTNode(t->term), tok(t)
+Leaf::Leaf(Symbol s, Token* t): ASTNode(s), tok(t)
 {
 }
 
 Leaf::~Leaf()
 {
-    // delete tok;
+    if (tok != nullptr)
+        delete tok;
 }
 
 AST::AST(): root_{nullptr},
@@ -39,14 +39,14 @@ AST::AST(): root_{nullptr},
 
 void AST::delete_sub_tree(ASTNode* subtree_root)
 {
-    // for (auto child: subtree_root->children)
-    //     delete_sub_tree(child);
-    // delete subtree_root;
+    for (auto child: subtree_root->children)
+        delete_sub_tree(child);
+    delete subtree_root;
 }
 
 AST::~AST()
 {
-    // delete_sub_tree(root_);
+    delete_sub_tree(root_);
 }
 
 bool AST::is_empty() const {
@@ -61,48 +61,64 @@ ASTNode* AST::get_curr_node()
 ASTNode* AST::get_root(){
     return root_;
 }
+
+// void AST::push_up_curr_node()
+// {
+//     bool is_node_found = false;
+//     while (!is_node_found) {
+
+//         // find parent with curr_child not pointing to children.end()
+//         while (curr_node_->curr_child == curr_node_->children.end()
+//                                       && curr_node_ != root_)
+//             curr_node_ = curr_node_->parent;
+        
+//         // find first nonterminal child
+//         // if node has children we must find node to wich we can hang another nodes
+//         while (curr_node_->curr_child != curr_node_->children.end()
+//                && is_terminal( (*(curr_node_->curr_child))->symbol) )
+//             ++(curr_node_->curr_child);
+        
+//         // such node is founded
+//         if (curr_node_->curr_child != curr_node_->children.end()) {
+//             ASTNode* prev_child = *(curr_node_->curr_child);
+//             ++(curr_node_->curr_child);
+//             curr_node_ = prev_child;
+//             is_node_found = true;
+
+//         // search in parent
+//         } else if (curr_node_ != root_) {
+//             is_node_found = false;
+//         } else 
+//             return;
+
+//     }
+// }
+
 void AST::push_up_curr_node()
 {
-    bool is_node_found = false;
-    while (!is_node_found) {
 
-        // find parent with curr_child not pointing to children.end()
-        while (curr_node_->curr_child == curr_node_->children.end()
+    while (curr_node_->curr_child == curr_node_->children.end()
                                       && curr_node_ != root_)
-        {
-            curr_node_ = curr_node_->parent;
-        }
-        
-
-        // find first nonterminal child
-        // if node has children we must find node to wich we can hang another nodes
-        while (curr_node_->curr_child != curr_node_->children.end()
-               && is_terminal( (*(curr_node_->curr_child))->symbol) )
-        {
-            ++(curr_node_->curr_child);
-        }
-        
-        // such node is founded
-        if (curr_node_->curr_child != curr_node_->children.end()) {
-            ASTNode* prev_child = *(curr_node_->curr_child);
-            ++(curr_node_->curr_child);
-            curr_node_ = prev_child;
-            is_node_found = true;
-
-        // search in parent
-        } else if (curr_node_ != root_) {
-            is_node_found = false;
-        } else 
-            return;
-
+        curr_node_ = curr_node_->parent;
+    
+    if (curr_node_->curr_child != curr_node_->children.end()) {
+        auto prev_child = *(curr_node_->curr_child);
+        ++(curr_node_->curr_child);
+        curr_node_ = prev_child;
     }
 }
 
-void AST::insert_root(ASTNode* root, list<ASTNode*>&& children) 
+void AST::insert_token(Token* tok)
+{
+    auto leaf = static_cast<Leaf*>(curr_node_);
+    leaf->tok = tok;
+    push_up_curr_node();
+}
+
+void AST::insert_root(ASTNode* root) 
 {
     if (root_ == nullptr)
         root_ = curr_node_ = root;
-    hang_to_curr_node(move(children));
 }
 
 void AST::hang_to_curr_node(list<ASTNode*>&& children)
@@ -112,7 +128,7 @@ void AST::hang_to_curr_node(list<ASTNode*>&& children)
     for (auto child: curr_node_->children)
         child->parent = curr_node_;
 
-    ASTNode* prev_child = *(curr_node_->curr_child);
+    auto prev_child = *(curr_node_->curr_child);
     ++(curr_node_->curr_child);
     curr_node_ = prev_child;
 }
