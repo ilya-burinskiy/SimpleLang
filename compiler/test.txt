@@ -1,4 +1,8 @@
-let y = - 100 + 200*-10/50 + -40 + 80;
-if y + 10/90 > 10 goto label1;
-label1:
-y = y + 100;
+let y = 0;
+input y;
+
+let x = 0;
+input x;
+
+let z = x + y;
+print z;

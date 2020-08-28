@@ -3,9 +3,10 @@
 #include "symbols.hpp"
 
 #include <list>
-#include <typeinfo>
 #include <exception>
 #include <iostream>
+#include <string>
+#include <sstream>
 
 using std::cout;
 using std::endl;
@@ -35,11 +36,17 @@ LL1Parser::LL1Parser(const char* fname): ip_{nullptr}, tree_()
 
 void LL1Parser::error() 
 {
+    using std::string;
+    using std::stringstream;
+
+    stringstream ss;
+    auto line = lex_->get_line_num();
+    ss << "Error in line " << line;
     delete ip_;
     delete lex_;
     tree_.~AST();
 
-    throw "error";
+    throw string(ss.str());
 }
 
 AST LL1Parser::get_tree()
@@ -141,11 +148,11 @@ LL1Parser::ParserState LL1Parser::M_()
 
     case E:
         switch (a_) {
-            case ID:    return DERIVE;
-            case NUM:   return DERIVE;
+            case ID:     return DERIVE;
+            case NUM:    return DERIVE;
             case UMINUS: return DERIVE;
-            case LB:    return DERIVE;
-            default:    return ERROR;
+            case LB:     return DERIVE;
+            default:     return ERROR;
         }
     break;
 
@@ -153,7 +160,6 @@ LL1Parser::ParserState LL1Parser::M_()
         switch (a_) {
             case PLUS:  return DERIVE;
             case MINUS: return DERIVE;
-            case UMINUS: return DERIVE; // e
             case RELOP: return DERIVE; // e
             case RB:    return DERIVE; // e
             case GOTO:  return DERIVE; // e
@@ -164,11 +170,11 @@ LL1Parser::ParserState LL1Parser::M_()
 
     case T:
         switch (a_) {
-            case ID:    return DERIVE;
-            case NUM:   return DERIVE;
-            case LB:    return DERIVE;
+            case ID:     return DERIVE;
+            case NUM:    return DERIVE;
+            case LB:     return DERIVE;
             case UMINUS: return DERIVE;
-            default:    return ERROR;
+            default:     return ERROR;
         }
     break;
 
@@ -179,7 +185,6 @@ LL1Parser::ParserState LL1Parser::M_()
             case DIV:   return DERIVE;
             case PLUS:  return DERIVE; // e
             case MINUS: return DERIVE; // e
-            case UMINUS: return DERIVE; // e
             case RELOP: return DERIVE; // e
             case RB:    return DERIVE; // e
             case GOTO:  return DERIVE; // e
@@ -224,9 +229,6 @@ void LL1Parser::derive()
 
                     stack_.push(L_);
                 }
-                break;
-
-                case END:
                 break;
             }
         }

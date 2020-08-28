@@ -57,8 +57,8 @@ FIRST(term_)     = {*, /, e}
 FIRST(factor)    = {(, num, id, -u}
 
 FOLLOW(factor)    = {+, -, *, /, ), relop, goto, ;}
-FOLLOW(term_)     = {+, -, -u, ), relop, goto, ;}
-FOLLOW(term)      = {+, -, -u, ), relop, goto, ;}
+FOLLOW(term_)     = {+, -, ), relop, goto, ;}
+FOLLOW(term)      = {+, -, ), relop, goto, ;}
 FOLLOW(expr_)     = {), relop, goto, ;}
 FOLLOW(expr)      = {), relop, goto, ;}
 FOLLOW(printstmt) = FOLLOW(inputstmt) = FOLLOW(gotostmt) = FOLLOW(ifstmt) = {;}

@@ -62,38 +62,6 @@ ASTNode* AST::get_root(){
     return root_;
 }
 
-// void AST::push_up_curr_node()
-// {
-//     bool is_node_found = false;
-//     while (!is_node_found) {
-
-//         // find parent with curr_child not pointing to children.end()
-//         while (curr_node_->curr_child == curr_node_->children.end()
-//                                       && curr_node_ != root_)
-//             curr_node_ = curr_node_->parent;
-        
-//         // find first nonterminal child
-//         // if node has children we must find node to wich we can hang another nodes
-//         while (curr_node_->curr_child != curr_node_->children.end()
-//                && is_terminal( (*(curr_node_->curr_child))->symbol) )
-//             ++(curr_node_->curr_child);
-        
-//         // such node is founded
-//         if (curr_node_->curr_child != curr_node_->children.end()) {
-//             ASTNode* prev_child = *(curr_node_->curr_child);
-//             ++(curr_node_->curr_child);
-//             curr_node_ = prev_child;
-//             is_node_found = true;
-
-//         // search in parent
-//         } else if (curr_node_ != root_) {
-//             is_node_found = false;
-//         } else 
-//             return;
-
-//     }
-// }
-
 void AST::push_up_curr_node()
 {
 

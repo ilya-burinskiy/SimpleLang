@@ -22,6 +22,7 @@ Lexer* Lexer::instance = nullptr;
 
 Lexer::Lexer(const char* fname): fname_(fname),
                                  buf_{},
+                                 line_{1},
                                  lexeme_begin_{buf_.end()},
                                  forward_{buf_.end()},
                                  words_{},
@@ -70,6 +71,11 @@ void Lexer::reserve(Word&& word) {
     words_.insert(make_pair(word.lexeme, move(word)));
 }
 
+ushort Lexer::get_line_num()
+{
+    return line_;
+}
+
 char Lexer::next_char() {
     if (forward_ == buf_.end()) {
         forward_ = buf_.begin();
@@ -92,6 +98,7 @@ void Lexer::skip_blank()
             c = next_char();
             if (isws(c)) 
                 state_ = 1;
+                if (c == '\n') ++line_;
             else {
                 state_ = 0;
                 --forward_;
@@ -124,6 +131,7 @@ Token* Lexer::get_token() {
         case 0:
             c = next_char();
             if (isws(c)) {
+                if (c == '\n') ++line_;
                 state_ = 1;
             } else if (isdigit(c)) {
                 state_ = 2;

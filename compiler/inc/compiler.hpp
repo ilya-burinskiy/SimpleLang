@@ -12,7 +12,6 @@ private:
 
     Compiler(const char* fname);
 
-    void semantic_rule_();
 public:
     static Compiler* get_instance(const char* fname);
     void compile();

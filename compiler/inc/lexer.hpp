@@ -15,6 +15,7 @@ class Lexer {
 private:
     const char*                           fname_;
     std::array<char, BUF_SIZE>            buf_;
+    ushort                                line_;
     std::array<char, BUF_SIZE>::iterator  lexeme_begin_;
     std::array<char, BUF_SIZE>::iterator  forward_;
     std::unordered_map<std::string, Word> words_;
@@ -40,6 +41,7 @@ public:
     void load_buf();
     
     Token* get_token();
+    ushort get_line_num();
     void reserve(const Word& word);
     void reserve(Word&& word);
 };
