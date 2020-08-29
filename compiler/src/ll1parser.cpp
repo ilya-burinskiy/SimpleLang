@@ -42,14 +42,15 @@ void LL1Parser::error()
     stringstream ss;
     auto line = lex_->get_line_num();
     ss << "Error in line " << line;
-    delete ip_;
-    delete lex_;
+
+    // this token woldn't be inserted is ast so it deleted
+    delete ip_; 
     tree_.~AST();
 
     throw string(ss.str());
 }
 
-AST LL1Parser::get_tree()
+AST& LL1Parser::get_tree()
 {
     return tree_;
 }

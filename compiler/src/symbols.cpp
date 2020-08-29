@@ -1,7 +1,6 @@
 #include "symbols.hpp"
-#include "astnode.hpp"
 
-#include <ostream>
+#include <iostream>
 
 using std::ostream;
 using std::cout;

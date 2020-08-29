@@ -4,7 +4,7 @@
 #include "symbols.hpp"
 #include "lexer.hpp"
 #include "token.hpp"
-#include "astnode.hpp"
+#include "ast.hpp"
 #include <list>
 #include <stack>
 
@@ -39,7 +39,7 @@ public:
 
     void set_curr_tok(Token*);
     void parse();
-    AST get_tree();
+    AST& get_tree();
 
     LL1Parser(const LL1Parser&) = delete;
     LL1Parser& operator=(const LL1Parser&) = delete;

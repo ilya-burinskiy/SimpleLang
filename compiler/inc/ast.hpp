@@ -1,5 +1,5 @@
-#ifndef ASTNODE_HPP_
-#define ASTNODE_HPP_
+#ifndef AST_HPP_
+#define AST_HPP_
 
 #include "symbols.hpp"
 #include "token.hpp"
@@ -13,9 +13,9 @@ struct ASTNode {
     std::list<ASTNode*>::iterator curr_child;
 
     ASTNode(Symbol s = EPS);
-    ASTNode(const ASTNode& other) = delete;
-    ASTNode& operator=(const ASTNode& other) = delete;
-    virtual ~ASTNode();
+    ASTNode(const ASTNode& other);
+    ASTNode& operator=(const ASTNode& other);
+    virtual ~ASTNode() = default;
 };
 
 struct Leaf: ASTNode {
@@ -23,6 +23,9 @@ struct Leaf: ASTNode {
 
     Leaf(Symbol s, Token* t = nullptr);
     ~Leaf();
+
+    Leaf(const Leaf& other);
+    Leaf& operator=(const Leaf& other);
 };
 
 
@@ -31,10 +34,20 @@ class AST
 private:
     ASTNode* root_;
     ASTNode* curr_node_;
+
+    void recursive_copy(const ASTNode* other);
+    void recursive_delete(ASTNode* subtree_root);
+
 public:
     AST();
+
+    AST(const AST& other);
+    AST(AST&& other);
+
+    AST& operator=(const AST& other);
+    AST& operator=(AST&& other);
+
     ~AST();
-    void delete_sub_tree(ASTNode* subtree_root);
 
     void insert_token(Token* tok);
     void insert_root(ASTNode* node);
@@ -43,8 +56,11 @@ public:
 
     bool is_empty() const;
     ASTNode* get_curr_node();
+    const ASTNode* get_root() const;
     ASTNode* get_root();
+
+    void drop_ptrs();
 };
 
-void postorder_traverse(ASTNode* start);
+void postorder_traverse(const ASTNode* start);
 #endif

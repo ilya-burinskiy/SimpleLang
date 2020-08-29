@@ -8,7 +8,7 @@ set(SCC_SRCS ${SCC_SRC_DIR}/main.cpp
              ${SCC_SRC_DIR}/token.cpp
              ${SCC_SRC_DIR}/lexer.cpp
              ${SCC_SRC_DIR}/ll1parser.cpp
-             ${SCC_SRC_DIR}/astnode.cpp
+             ${SCC_SRC_DIR}/ast.cpp
              ${SCC_SRC_DIR}/compiler.cpp
              ${SCC_SRC_DIR}/symbols.cpp)
 

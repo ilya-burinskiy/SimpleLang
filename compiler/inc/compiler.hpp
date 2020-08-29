@@ -3,7 +3,7 @@
 
 #include "lexer.hpp"
 #include "ll1parser.hpp"
-#include "astnode.hpp"
+#include "ast.hpp"
 
 class Compiler {
 private:
