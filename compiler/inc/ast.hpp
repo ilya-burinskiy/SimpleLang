@@ -15,6 +15,7 @@ struct ASTNode {
     ASTNode(Symbol s = EPS);
     ASTNode(const ASTNode& other);
     ASTNode& operator=(const ASTNode& other);
+
     virtual ~ASTNode() = default;
 };
 
@@ -22,10 +23,10 @@ struct Leaf: ASTNode {
     Token* tok;
 
     Leaf(Symbol s, Token* t = nullptr);
-    ~Leaf();
 
     Leaf(const Leaf& other);
     Leaf& operator=(const Leaf& other);
+    virtual ~Leaf();
 };
 
 
@@ -41,10 +42,10 @@ private:
 public:
     AST();
 
-    AST(const AST& other);
+    AST(const AST& other) = delete;
     AST(AST&& other);
 
-    AST& operator=(const AST& other);
+    AST& operator=(const AST& other) = delete;
     AST& operator=(AST&& other);
 
     ~AST();
@@ -52,7 +53,7 @@ public:
     void insert_token(Token* tok);
     void insert_root(ASTNode* node);
     void push_up_curr_node();
-    void hang_to_curr_node(std::list<ASTNode*>&& children);
+    void hang_to_curr_node(const std::list<ASTNode*>& children);
 
     bool is_empty() const;
     ASTNode* get_curr_node();
@@ -62,5 +63,4 @@ public:
     void drop_ptrs();
 };
 
-void postorder_traverse(const ASTNode* start);
 #endif

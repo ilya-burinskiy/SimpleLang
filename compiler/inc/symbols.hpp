@@ -13,8 +13,8 @@ typedef enum {
 
     // Nonterminals:
     P,      // programm
-    L_,     // line_ (left reqursion elimination)
-    L,      // line
+    I_,     // line_ (left reqursion elimination)
+    I,      // line
     D,      // definition
     S,      // statement
     LAS,    // label or assigment statement

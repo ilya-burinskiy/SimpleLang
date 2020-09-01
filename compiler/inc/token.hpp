@@ -29,6 +29,7 @@ struct Word: public Token {
     Word(Word&&) = default;
     Word& operator=(const Word&) = default;
     Word& operator=(Word&&) = default;
+    virtual ~Word() = default;
 };
 
 struct Num: public Token {
@@ -41,6 +42,7 @@ struct Num: public Token {
     Num& operator=(const Num&) = default;
     Num& operator=(Num&&) = default;
     
+    virtual ~Num() = default;
 };
 
 struct Relop: public Token {
@@ -56,5 +58,6 @@ struct Relop: public Token {
 
     Relop& operator=(const Relop&) = default;
     Relop& operator=(Relop&&) = default;
+    virtual ~Relop() = default;
 };
 #endif

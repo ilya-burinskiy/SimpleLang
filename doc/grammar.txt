@@ -1,6 +1,6 @@
-prog    -> line_ | e
-line_   -> line line_ | e
-line    -> stmt | def
+prog           -> instructions | e
+instructions   -> instruction instructions | e
+instruction    -> stmt | def
 
 
 def     -> let id = expr;
@@ -35,9 +35,9 @@ term_  -> * factor term_
 
 factor -> (expr) | num | id | -u factor 
 
-FIRST(prog)      = {FIRST(line), e}  = {let, id, if, goto, print, input, e}
-FIRST(line_)     = {FIRST(line), e}  = {let, id, if, goto, print, input, e}
-FIRST(line)      = {let, id, if, goto, print, input}
+FIRST(prog)             = {FIRST(instruction), e}  = {let, id, if, goto, print, input, e}
+FIRST(instructions)     = {FIRST(instruction), e}  = {let, id, if, goto, print, input, e}
+FIRST(instruction)      = {let, id, if, goto, print, input}
 
 FIRST(def)       = {let}
 FIRST(stmt)      = {id, if, goto, print, input}
@@ -56,17 +56,17 @@ FIRST(term)      = {(, num, id, -u}
 FIRST(term_)     = {*, /, e}
 FIRST(factor)    = {(, num, id, -u}
 
-FOLLOW(factor)    = {+, -, *, /, ), relop, goto, ;}
-FOLLOW(term_)     = {+, -, ), relop, goto, ;}
-FOLLOW(term)      = {+, -, ), relop, goto, ;}
-FOLLOW(expr_)     = {), relop, goto, ;}
-FOLLOW(expr)      = {), relop, goto, ;}
-FOLLOW(printstmt) = FOLLOW(inputstmt) = FOLLOW(gotostmt) = FOLLOW(ifstmt) = {;}
-FOLLOW(LA)        = {:, ;}
-FOLLOW(LAstmt)    = {:, ;}
-FOLLOW(stmt)      = {FIRST(line), $}
-FOLLOW(def)       = {FIRST(line), $}
-FOLLOW(line)      = {FIRST(line), $}
-FOLLOW(line_)     = {FIRST(line), $}
-FOLLOW(prog)      = {$}
+FOLLOW(factor)           = {+, -, *, /, ), relop, goto, ;}
+FOLLOW(term_)            = {+, -, ), relop, goto, ;}
+FOLLOW(term)             = {+, -, ), relop, goto, ;}
+FOLLOW(expr_)            = {), relop, goto, ;}
+FOLLOW(expr)             = {), relop, goto, ;}
+FOLLOW(printstmt)        = FOLLOW(inputstmt) = FOLLOW(gotostmt) = FOLLOW(ifstmt) = {;}
+FOLLOW(LA)               = {:, ;}
+FOLLOW(LAstmt)           = {:, ;}
+FOLLOW(stmt)             = {FIRST(instruction), $}
+FOLLOW(def)              = {FIRST(instruction), $}
+FOLLOW(instruction)      = {FIRST(instruction), $}
+FOLLOW(instructions)     = {FIRST(instruction), $}
+FOLLOW(prog)             = {$}
 

@@ -11,6 +11,8 @@
 using std::cout;
 using std::endl;
 using std::list;
+using std::string;
+using std::stringstream;
 
 LL1Parser* LL1Parser::instance = nullptr;
 
@@ -34,11 +36,8 @@ LL1Parser::LL1Parser(const char* fname): ip_{nullptr}, tree_()
     a_ = ip_->term;
 }
 
-void LL1Parser::error() 
+void LL1Parser::error()
 {
-    using std::string;
-    using std::stringstream;
-
     stringstream ss;
     auto line = lex_->get_line_num();
     ss << "Error in line " << line;
@@ -61,7 +60,7 @@ LL1Parser::ParserState LL1Parser::M_()
     switch (curr_symbol_) {
 
         case P:
-        case L_:
+        case I_:
             switch (a_) {
                 case LET:   return DERIVE;    
                 case ID:    return DERIVE;
@@ -74,7 +73,7 @@ LL1Parser::ParserState LL1Parser::M_()
             }
         break;
 
-        case L:
+        case I:
             switch (a_) {
                 case LET:   return DERIVE;    
                 case ID:    return DERIVE;
@@ -225,17 +224,17 @@ void LL1Parser::derive()
                     tree_.insert_root(prog);
 
                     // prog -> line_
-                    auto l_ = new ASTNode(L_);
+                    auto l_ = new ASTNode(I_);
                     tree_.hang_to_curr_node({l_});
 
-                    stack_.push(L_);
+                    stack_.push(I_);
                 }
                 break;
             }
         }
         break;
 
-        case L_:
+        case I_:
         {
             switch (a_) {
                 case LET:       
@@ -246,12 +245,12 @@ void LL1Parser::derive()
                 case INPUT:
                 {
                     // line_ -> line line_
-                    auto l = new ASTNode(L);
-                    auto l_ = new ASTNode(L_);
+                    auto l = new ASTNode(I);
+                    auto l_ = new ASTNode(I_);
                     tree_.hang_to_curr_node({l, l_});
 
-                    stack_.push(L_);
-                    stack_.push(L);
+                    stack_.push(I_);
+                    stack_.push(I);
                 }
                 break;
 
@@ -262,7 +261,7 @@ void LL1Parser::derive()
         }
         break;
 
-        case L:
+        case I:
         {
             switch (a_) {
                 case LET:

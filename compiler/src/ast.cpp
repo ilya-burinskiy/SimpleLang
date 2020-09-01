@@ -19,13 +19,12 @@ ASTNode::ASTNode(Symbol s): symbol(s),
 
 ASTNode::ASTNode(const ASTNode& other)
 {
-    this->symbol = other.symbol;
-    // parent and children will be handled by AST
+    symbol = other.symbol;
 }
 
 ASTNode& ASTNode::operator=(const ASTNode& other)
 {
-    this->symbol = other.symbol;
+    symbol = other.symbol;
     return *this;
 }
 
@@ -35,7 +34,7 @@ Leaf::Leaf(Symbol s, Token* t): ASTNode(s), tok(t)
 
 Leaf::Leaf(const Leaf& other): ASTNode(other)
 {
-    this->tok = new Token(*(other.tok));
+    tok = new Token(*(other.tok));
 }
 
 Leaf& Leaf::operator=(const Leaf& other)
@@ -44,8 +43,8 @@ Leaf& Leaf::operator=(const Leaf& other)
         return *this;
 
     ASTNode::operator=(other);
-    delete this->tok;
-    this->tok = new Token(*(other.tok));
+    delete tok;
+    tok = new Token(*(other.tok));
     return *this;
 }
 
@@ -60,38 +59,20 @@ AST::AST(): root_{nullptr},
 {
 }
 
-AST::AST(const AST& other)
-{
-    this->root_ = this->curr_node_ = nullptr;
-    recursive_copy(other.get_root());
-}
 
 AST::AST(AST&& other)
 {
-    this->curr_node_ = this->root_ = other.get_root();
+    curr_node_ = root_ = other.get_root();
     other.drop_ptrs();
 }
 
-AST& AST::operator=(const AST& other)
-{
-    if (this == &other)
-        return *this;
-
-    if (this->root_ != nullptr)
-        recursive_delete(this->root_);
-    root_ = curr_node_ = nullptr;
-    recursive_copy(other.get_root());
-
-    return *this;
-}
 
 AST& AST::operator=(AST&& other)
 {
     if (this == & other)
         return *this;
     
-    if (this->root_ != nullptr)
-        recursive_delete(this->root_);
+    root_ = curr_node_ = other.get_root();
     other.drop_ptrs();
     return *this; 
 }
@@ -103,26 +84,10 @@ void AST::recursive_delete(ASTNode* subtree_root)
     delete subtree_root;
 }
 
-void AST::recursive_copy(const ASTNode* other)
-{
-    if (root_ == nullptr) {
-        root_ = curr_node_ = new ASTNode(*other);
-        root_->parent = nullptr;
-    }
-
-    for (auto child: other->children) {
-        curr_node_->children.push_back(new ASTNode(*child));
-        curr_node_->children.back()->parent = curr_node_;
-        curr_node_  = curr_node_->children.back();
-        recursive_copy(child);
-    }
-    curr_node_->curr_child = curr_node_->children.end();
-    curr_node_ = curr_node_->parent;
-}
-
 AST::~AST()
 {
-    recursive_delete(root_);
+    if (root_ != nullptr)
+        recursive_delete(root_);
 }
 
 bool AST::is_empty() const 
@@ -177,28 +142,16 @@ void AST::insert_root(ASTNode* root)
         root_ = curr_node_ = root;
 }
 
-void AST::hang_to_curr_node(list<ASTNode*>&& children)
+void AST::hang_to_curr_node(const list<ASTNode*>& children)
 {
-    curr_node_->children = move(children);
-    curr_node_->curr_child = curr_node_->children.begin();
-    for (auto child: curr_node_->children)
+    for (auto child: children) {
+        curr_node_->children.push_back(child);
         child->parent = curr_node_;
+    }
+    curr_node_->curr_child = curr_node_->children.begin();
 
     auto prev_child = *(curr_node_->curr_child);
     ++(curr_node_->curr_child);
     curr_node_ = prev_child;
 }
 
-
-void postorder_traverse(const ASTNode* start_node)
-{
-    for (auto child: start_node->children) {
-        postorder_traverse(child);
-    }
-
-    if (is_terminal(start_node->symbol))
-    {
-        cout << start_node->symbol << ' ' << flush;
-        
-    }
-}
