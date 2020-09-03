@@ -10,18 +10,9 @@
 #include <string>
 #include <unordered_map>
 
-/*
-                    TO DO
-    - Make two buffers instead of one and reload them.
-    - Handle errors.
-    - Skip comments
-*/
-
 Lexer* Lexer::instance = nullptr;
 
-
-Lexer::Lexer(const char* fname): fname_(fname),
-                                 buf_{},
+Lexer::Lexer(const char* fname): buf_{},
                                  line_{1},
                                  lexeme_begin_{buf_.end()},
                                  forward_{buf_.end()},
@@ -34,6 +25,8 @@ Lexer::Lexer(const char* fname): fname_(fname),
     reserve(Word(PRINT, "print"));
     reserve(Word(GOTO,  "goto"));
     reserve(Word(IF,    "if"));
+
+    load_buf(fname);
 }
 
 
@@ -43,9 +36,9 @@ Lexer* Lexer::get_instance(const char* fname) {
     return instance; 
 }
 
-void Lexer::load_buf() {
+void Lexer::load_buf(const char* fname) {
     std::ifstream in;
-    in.open(fname_);
+    in.open(fname);
     if (in.is_open()) {
         int i = 0;
         while (!in.eof()) {
@@ -161,7 +154,7 @@ Token* Lexer::get_token() {
                 state_ = 0;
                 return new Token(COLON);
             } else if (EOF == c) {
-                state_ = 5;
+                return new Token(END);
             }
         break;
 
@@ -181,13 +174,6 @@ Token* Lexer::get_token() {
         // op case
         case 4:
             return get_op();
-        
-        // EOF case:
-        case 5:
-            // Buffers might be reloaded here if eof at
-            // the end of one of them and if is not
-            // return that there is no tokens
-            return new Token(END);
         }
     }
 }

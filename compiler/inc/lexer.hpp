@@ -13,7 +13,6 @@
 
 class Lexer {
 private:
-    const char*                           fname_;
     std::array<char, BUF_SIZE>            buf_;
     ushort                                line_;
     std::array<char, BUF_SIZE>::iterator  lexeme_begin_;
@@ -38,7 +37,7 @@ public:
     Lexer& operator=(const Lexer&) = delete;
 
     static Lexer* get_instance(const char* fname);
-    void load_buf();
+    void load_buf(const char* fname);
     
     Token* get_token();
     ushort get_line_num();

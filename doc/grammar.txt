@@ -61,9 +61,12 @@ FOLLOW(term_)            = {+, -, ), relop, goto, ;}
 FOLLOW(term)             = {+, -, ), relop, goto, ;}
 FOLLOW(expr_)            = {), relop, goto, ;}
 FOLLOW(expr)             = {), relop, goto, ;}
-FOLLOW(printstmt)        = FOLLOW(inputstmt) = FOLLOW(gotostmt) = FOLLOW(ifstmt) = {;}
-FOLLOW(LA)               = {:, ;}
-FOLLOW(LAstmt)           = {:, ;}
+FOLLOW(printstmt)        = {FIRST(instruction), $}
+FOLLOW(gotostmt)         = {FIRST(instruction), $}
+FOLLOW(ifstmt)           = {FIRST(instruction), $}
+FOLLOW(inputstmt)        = {FIRST(instruction), $}
+FOLLOW(LA)               = {FIRST(instruction), $}
+FOLLOW(LAstmt)           = {FIRST(instruction), $}
 FOLLOW(stmt)             = {FIRST(instruction), $}
 FOLLOW(def)              = {FIRST(instruction), $}
 FOLLOW(instruction)      = {FIRST(instruction), $}

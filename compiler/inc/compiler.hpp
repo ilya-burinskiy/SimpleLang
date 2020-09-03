@@ -7,16 +7,18 @@
 
 #include <unordered_map>
 #include <string>
+#include <list>
+#include <sstream>
 
 class Compiler {
 private:
-    static Compiler* instance;
-    LL1Parser* parser_;
+    static Compiler*                        instance;
+    LL1Parser*                              parser_;
 
-    ushort high_adr_;
-    ushort bias_;
+    ushort                                  high_adr_;
+    ushort                                  bias_;
     std::unordered_map<std::string, ushort> sym_table_;
-
+    std::list<std::string>                  instructions_;
 
     Compiler(const char* fname);
     void apply_semantic_rules(ASTNode* node);

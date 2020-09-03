@@ -31,7 +31,6 @@ LL1Parser::LL1Parser(const char* fname): ip_{nullptr}, tree_()
     curr_symbol_ = stack_.top();
 
     lex_ = Lexer::get_instance(fname);
-    lex_->load_buf();
     ip_ = lex_->get_token();
     a_ = ip_->term;
 }
@@ -54,6 +53,16 @@ AST& LL1Parser::get_tree()
     return tree_;
 }
 
+/**
+ * Parse table
+ * 
+ * Algorithm for constructin parse table:
+ * For each grammar production A -> alpha do
+ *      For each terminal a from FIRST(alpha) add A -> alpha to M[A, a]
+ *      If e in FIRST(alpha), then for each terminal b from FOLLOW(A) add
+ *      A -> alpha to M[A, b]. If e in FIRST(alpha) and $ in FOLLOW(A) then
+ *      add  A -> alpha to M[A, $]
+ */
 LL1Parser::ParserState LL1Parser::M_() 
 {
 
@@ -205,6 +214,10 @@ LL1Parser::ParserState LL1Parser::M_()
     }
 }
 
+/**
+ *   Derives production for the current symbol
+ *   and insterts its children to the AST
+ */
 void LL1Parser::derive() 
 {
     switch (curr_symbol_) {
@@ -223,9 +236,9 @@ void LL1Parser::derive()
                     auto prog = new ASTNode(P);
                     tree_.insert_root(prog);
 
-                    // prog -> line_
-                    auto l_ = new ASTNode(I_);
-                    tree_.hang_to_curr_node({l_});
+                    // prog -> instr_
+                    auto i_ = new ASTNode(I_);
+                    tree_.hang_to_curr_node({i_});
 
                     stack_.push(I_);
                 }
@@ -244,10 +257,10 @@ void LL1Parser::derive()
                 case PRINT: 
                 case INPUT:
                 {
-                    // line_ -> line line_
-                    auto l = new ASTNode(I);
-                    auto l_ = new ASTNode(I_);
-                    tree_.hang_to_curr_node({l, l_});
+                    // instr_ -> instr intstr_
+                    auto i = new ASTNode(I);
+                    auto i_ = new ASTNode(I_);
+                    tree_.hang_to_curr_node({i, i_});
 
                     stack_.push(I_);
                     stack_.push(I);

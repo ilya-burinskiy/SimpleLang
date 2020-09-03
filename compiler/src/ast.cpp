@@ -17,36 +17,11 @@ ASTNode::ASTNode(Symbol s): symbol(s),
 {
 }
 
-ASTNode::ASTNode(const ASTNode& other)
-{
-    symbol = other.symbol;
-}
-
-ASTNode& ASTNode::operator=(const ASTNode& other)
-{
-    symbol = other.symbol;
-    return *this;
-}
 
 Leaf::Leaf(Symbol s, Token* t): ASTNode(s), tok(t)
 {
 }
 
-Leaf::Leaf(const Leaf& other): ASTNode(other)
-{
-    tok = new Token(*(other.tok));
-}
-
-Leaf& Leaf::operator=(const Leaf& other)
-{
-    if (this == &other)
-        return *this;
-
-    ASTNode::operator=(other);
-    delete tok;
-    tok = new Token(*(other.tok));
-    return *this;
-}
 
 Leaf::~Leaf()
 {
@@ -115,6 +90,10 @@ void AST::drop_ptrs()
     root_ = curr_node_ = nullptr;
 }
 
+/**
+ *  Moves the curr_node_ pointer to the first node
+ *  to which other nodes can be hung 
+ */
 void AST::push_up_curr_node()
 {
 
@@ -129,6 +108,10 @@ void AST::push_up_curr_node()
     }
 }
 
+/**
+ *  Bind the token from the lexer to the AST leaf so
+ *  that when tree is deleted, token are also deleted 
+ */
 void AST::insert_token(Token* tok)
 {
     auto leaf = static_cast<Leaf*>(curr_node_);
